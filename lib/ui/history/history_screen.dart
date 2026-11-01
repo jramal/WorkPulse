@@ -81,6 +81,50 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
+  Future<void> _deleteDay(
+    String dayKey,
+    List<Activity> activities,
+    DailySummary summary,
+  ) async {
+    final tracking = AppServicesScope.of(context).tracking;
+    final messenger = ScaffoldMessenger.of(context);
+    const stillTracking = SnackBar(
+      content: Text('End work before deleting this day.'),
+    );
+    if (activities.any((a) => a.endTime == null)) {
+      messenger.showSnackBar(stillTracking);
+      return;
+    }
+    final title = _dayTitle(dayKey);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete this day?'),
+        content: Text(
+          '$title: worked ${formatHoursMinutes(summary.totalWorked)}, '
+          'break ${formatHoursMinutes(summary.totalBreak)}. '
+          'This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            key: const Key('confirm-delete-day'),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    final deleted = await tracking.deleteDay(dayKey);
+    messenger.showSnackBar(
+      deleted ? SnackBar(content: Text('$title deleted.')) : stillTracking,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final tracking = AppServicesScope.of(context).tracking;
@@ -92,7 +136,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
           builder: (context, settingsSnapshot) {
             final settings = settingsSnapshot.data;
             final days = <String, List<Activity>>{};
-            for (final activity in activitiesSnapshot.data ?? const <Activity>[]) {
+            for (final activity
+                in activitiesSnapshot.data ?? const <Activity>[]) {
               (days[activity.dayKey] ??= []).add(activity);
             }
             final keys = days.keys.toList();
@@ -124,10 +169,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           const SizedBox(height: AppSpacing.md - 4),
                       itemBuilder: (context, index) {
                         final key = keys[index];
+                        final summary = _summarizeDay(
+                          tracking,
+                          days[key]!,
+                          settings,
+                        );
                         return _DayTile(
                           dayKey: key,
-                          summary: _summarizeDay(tracking, days[key]!, settings),
+                          summary: summary,
                           onTap: () => _openDay(key),
+                          onDelete: () => _deleteDay(key, days[key]!, summary),
                         );
                       },
                     ),
@@ -154,11 +205,13 @@ class _DayTile extends StatelessWidget {
     required this.dayKey,
     required this.summary,
     required this.onTap,
+    required this.onDelete,
   });
 
   final String dayKey;
   final DailySummary summary;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -183,6 +236,13 @@ class _DayTile extends StatelessWidget {
                     ),
                   ),
                   _TargetBadge(summary: summary),
+                  IconButton(
+                    key: Key('delete-day-$dayKey'),
+                    tooltip: 'Delete this day',
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Icons.delete_outline_rounded),
+                    onPressed: onDelete,
+                  ),
                 ],
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -197,7 +257,8 @@ class _DayTile extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: summary.progress,
                   minHeight: 6,
-                  color: summary.overtime > Duration.zero ||
+                  color:
+                      summary.overtime > Duration.zero ||
                           summary.remaining == Duration.zero
                       ? AppAccents.productive
                       : AppAccents.worked,
@@ -237,10 +298,8 @@ class _TargetBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w700,
-        ),
+        style: Theme.of(context).textTheme.labelMedium
+            ?.copyWith(color: color, fontWeight: FontWeight.w700),
       ),
     );
   }
@@ -341,7 +400,8 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                     activities: activities,
                     summary: _summarizeDay(tracking, activities, settings),
                     breakNames: {
-                      for (final type in typesSnapshot.data ?? const <BreakType>[])
+                      for (final type
+                          in typesSnapshot.data ?? const <BreakType>[])
                         type.id: type.name,
                     },
                   );
@@ -474,7 +534,10 @@ class _Row extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: theme.textTheme.bodyMedium?.copyWith(color: color)),
+          Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(color: color),
+          ),
           Text(
             value,
             style: theme.textTheme.bodyMedium?.copyWith(

@@ -121,6 +121,48 @@ void main() {
     expect(find.text('Work'), findsOneWidget);
   });
 
+  testWidgets('a finished day can be deleted after confirming', (tester) async {
+    await _pumpApp(tester);
+
+    await tester.tap(find.byKey(const Key('start-work-button')));
+    await _settle(tester);
+    await tester.tap(find.byKey(const Key('end-work-button')));
+    await _settle(tester);
+    await tester.tap(find.text('History'));
+    await _settle(tester);
+    final deleteButton = find.byTooltip('Delete this day');
+    expect(deleteButton, findsOneWidget);
+
+    await tester.tap(deleteButton);
+    await _settle(tester);
+    expect(find.text('Delete this day?'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await _settle(tester);
+    expect(find.text('Today'), findsOneWidget);
+
+    await tester.tap(deleteButton);
+    await _settle(tester);
+    await tester.tap(find.byKey(const Key('confirm-delete-day')));
+    await _settle(tester);
+    expect(find.text('Days you track will appear here.'), findsOneWidget);
+  });
+
+  testWidgets('a day still being tracked cannot be deleted', (tester) async {
+    await _pumpApp(tester);
+
+    await tester.tap(find.byKey(const Key('start-work-button')));
+    await _settle(tester);
+    await tester.tap(find.text('History'));
+    await _settle(tester);
+
+    await tester.tap(find.byTooltip('Delete this day'));
+    await _settle(tester);
+
+    expect(find.text('Delete this day?'), findsNothing);
+    expect(find.text('End work before deleting this day.'), findsWidgets);
+    expect(find.text('Today'), findsOneWidget);
+  });
+
   testWidgets('Settings reaches the Teams screen and a trigger editor', (
     tester,
   ) async {

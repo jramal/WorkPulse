@@ -133,10 +133,11 @@ class TrackingEngine {
       // had committed in between.
       await _db.customStatement('UPDATE app_settings SET id = id WHERE 0');
 
-      final open = await (_db.select(_db.activities)
-            ..where((a) => a.endTime.isNull())
-            ..limit(1))
-          .getSingleOrNull();
+      final open =
+          await (_db.select(_db.activities)
+                ..where((a) => a.endTime.isNull())
+                ..limit(1))
+              .getSingleOrNull();
       if (!allowedFrom(open)) return null;
 
       final now = DateTime.now();
@@ -253,6 +254,30 @@ class TrackingEngine {
       expectedFinish: hasOpen ? now.add(target - worked) : null,
       finishedAt: hasOpen ? null : lastEnd,
     );
+  }
+
+  /// Permanently removes one day's records. Returns false, changing nothing,
+  /// if the day is still being tracked: its timer, notification and break
+  /// alarms all depend on the open activity.
+  Future<bool> deleteDay(String dayKey) {
+    return _db.transaction(() async {
+      // Takes the write lock up front; see _transition.
+      await _db.customStatement('UPDATE app_settings SET id = id WHERE 0');
+
+      final activities = await (_db.select(
+        _db.activities,
+      )..where((a) => a.dayKey.equals(dayKey))).get();
+      if (activities.any((a) => a.endTime == null)) return false;
+
+      // A queued Teams message has its own text, so it can still be sent.
+      await (_db.update(_db.teamsDeliveries)
+            ..where((d) => d.activityId.isIn(activities.map((a) => a.id))))
+          .write(const TeamsDeliveriesCompanion(activityId: Value(null)));
+      await (_db.delete(
+        _db.activities,
+      )..where((a) => a.dayKey.equals(dayKey))).go();
+      return true;
+    });
   }
 
   Future<void> updateDailyTarget(Duration target) {
