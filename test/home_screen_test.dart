@@ -1,4 +1,5 @@
-import 'package:drift/drift.dart' show DatabaseConnection, driftRuntimeOptions;
+import 'package:drift/drift.dart'
+    show DatabaseConnection, Value, driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:workpulse/app.dart';
 import 'package:workpulse/app_services.dart';
 import 'package:workpulse/data/database.dart';
+import 'package:workpulse/domain/tracking_engine.dart';
+import 'package:workpulse/theme/app_theme.dart';
 import 'package:workpulse/ui/home/home_screen.dart';
 
 Future<void> _pumpApp(WidgetTester tester) async {
@@ -42,6 +45,50 @@ void main() {
     expect(find.text('Not started'), findsOneWidget);
     expect(_finishText(tester), '--:--');
     expect(find.byKey(const Key('start-work-button')), findsOneWidget);
+  });
+
+  testWidgets('the summary card shows hours and minutes, without seconds', (
+    tester,
+  ) async {
+    await _pumpApp(tester);
+
+    expect(find.text('Worked'), findsOneWidget);
+    expect(find.text('Break of 1h'), findsOneWidget);
+    expect(find.text('Remaining'), findsOneWidget);
+    expect(find.text('8h'), findsOneWidget);
+    expect(find.text('00:00:00'), findsNothing);
+  });
+
+  testWidgets('the summary card flags a break over the allowance', (
+    tester,
+  ) async {
+    final db = AppDatabase(
+      executor: DatabaseConnection(
+        NativeDatabase.memory(),
+        closeStreamsSynchronously: true,
+      ),
+    );
+    final services = AppServices(database: db);
+    await tester.runAsync(() async {
+      await services.tracking.updateAllowedBreak(const Duration(minutes: 10));
+      final start = DateTime.now().subtract(const Duration(hours: 1));
+      await db
+          .into(db.activities)
+          .insert(
+            ActivitiesCompanion.insert(
+              kind: ActivityKind.breakActivity,
+              startTime: start,
+              endTime: Value(start.add(const Duration(minutes: 30))),
+              dayKey: dayKeyFor(DateTime.now()),
+            ),
+          );
+    });
+    await tester.pumpWidget(WorkPulseApp(services: services));
+    await _settle(tester);
+
+    expect(find.text('Over 10m break'), findsOneWidget);
+    final value = tester.widget<Text>(find.text('30m'));
+    expect(value.style?.color, AppAccents.warning);
   });
 
   testWidgets('starting work shows a finish time and the Working actions', (

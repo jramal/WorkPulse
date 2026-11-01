@@ -20,11 +20,3 @@ String formatElapsed(Duration duration) {
   final seconds = duration.inSeconds.remainder(60);
   return minutes == 0 ? '${seconds}s' : '${minutes}m ${seconds}s';
 }
-
-/// "08:15:02".
-String formatStopwatch(Duration duration) {
-  String two(int n) => n.toString().padLeft(2, '0');
-  return '${two(duration.inHours)}:'
-      '${two(duration.inMinutes.remainder(60))}:'
-      '${two(duration.inSeconds.remainder(60))}';
-}

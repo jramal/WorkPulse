@@ -383,104 +383,84 @@ class _StatRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final overtime = summary.overtime > Duration.zero;
     final allowed = formatHoursMinutes(summary.allowedBreak);
-    const gap = SizedBox(width: AppSpacing.md - 6);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: _StatTile(
-            label: 'Worked',
-            value: summary.totalWorked,
-            icon: Icons.work_rounded,
-            color: AppAccents.worked,
+    final divider = VerticalDivider(
+      width: 1,
+      indent: AppSpacing.xs,
+      endIndent: AppSpacing.xs,
+      color: Theme.of(context).colorScheme.outlineVariant,
+    );
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+        child: IntrinsicHeight(
+          child: Row(
+            children: [
+              Expanded(
+                child: _Stat(label: 'Worked', value: summary.totalWorked),
+              ),
+              divider,
+              Expanded(
+                child: _Stat(
+                  label: summary.breakExceeded
+                      ? 'Over $allowed break'
+                      : 'Break of $allowed',
+                  value: summary.totalBreak,
+                  valueColor: summary.breakExceeded ? AppAccents.warning : null,
+                ),
+              ),
+              divider,
+              Expanded(
+                child: _Stat(
+                  label: overtime ? 'Overtime' : 'Remaining',
+                  value: overtime ? summary.overtime : summary.remaining,
+                ),
+              ),
+            ],
           ),
         ),
-        gap,
-        Expanded(
-          child: _StatTile(
-            label: 'Break',
-            value: summary.totalBreak,
-            icon: Icons.coffee_rounded,
-            color: summary.breakExceeded
-                ? AppAccents.warning
-                : AppAccents.breaks,
-            note: summary.breakExceeded
-                ? 'Over $allowed limit'
-                : 'Of $allowed allowed',
-          ),
-        ),
-        gap,
-        Expanded(
-          child: _StatTile(
-            label: overtime ? 'Overtime' : 'Remaining',
-            value: overtime ? summary.overtime : summary.remaining,
-            icon: overtime
-                ? Icons.trending_up_rounded
-                : Icons.hourglass_bottom_rounded,
-            color: AppAccents.remaining,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
 
-class _StatTile extends StatelessWidget {
-  const _StatTile({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-    this.note,
-  });
+class _Stat extends StatelessWidget {
+  const _Stat({required this.label, required this.value, this.valueColor});
 
   final String label;
   final Duration value;
-  final IconData icon;
-  final Color color;
-  final String? note;
+  final Color? valueColor;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final quiet = theme.colorScheme.onSurfaceVariant;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md - 4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            IconBadge(icon: icon, color: color),
-            const SizedBox(height: AppSpacing.md - 4),
-            Text(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      child: Column(
+        children: [
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
               label,
-              style: theme.textTheme.bodyMedium?.copyWith(color: quiet),
-            ),
-            const SizedBox(height: 2),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                formatStopwatch(value),
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
+              maxLines: 1,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 2),
-            // Always present, so all three tiles stay the same height.
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                note ?? ' ',
-                maxLines: 1,
-                style: theme.textTheme.bodySmall?.copyWith(color: quiet),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              formatHoursMinutes(value),
+              maxLines: 1,
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: valueColor,
+                fontWeight: FontWeight.w700,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
