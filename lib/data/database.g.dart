@@ -1489,39 +1489,11 @@ class $AppSettingsTable extends AppSettings
     requiredDuringInsert: false,
     defaultValue: const Constant(60),
   );
-  static const VerificationMeta _teamsEnabledMeta = const VerificationMeta(
-    'teamsEnabled',
-  );
-  @override
-  late final GeneratedColumn<bool> teamsEnabled = GeneratedColumn<bool>(
-    'teams_enabled',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("teams_enabled" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
-  );
-  static const VerificationMeta _teamsDefaultDestinationMeta =
-      const VerificationMeta('teamsDefaultDestination');
-  @override
-  late final GeneratedColumn<String> teamsDefaultDestination =
-      GeneratedColumn<String>(
-        'teams_default_destination',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
     dailyTargetMinutes,
     allowedBreakMinutes,
-    teamsEnabled,
-    teamsDefaultDestination,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1556,24 +1528,6 @@ class $AppSettingsTable extends AppSettings
         ),
       );
     }
-    if (data.containsKey('teams_enabled')) {
-      context.handle(
-        _teamsEnabledMeta,
-        teamsEnabled.isAcceptableOrUnknown(
-          data['teams_enabled']!,
-          _teamsEnabledMeta,
-        ),
-      );
-    }
-    if (data.containsKey('teams_default_destination')) {
-      context.handle(
-        _teamsDefaultDestinationMeta,
-        teamsDefaultDestination.isAcceptableOrUnknown(
-          data['teams_default_destination']!,
-          _teamsDefaultDestinationMeta,
-        ),
-      );
-    }
     return context;
   }
 
@@ -1595,14 +1549,6 @@ class $AppSettingsTable extends AppSettings
         DriftSqlType.int,
         data['${effectivePrefix}allowed_break_minutes'],
       )!,
-      teamsEnabled: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}teams_enabled'],
-      )!,
-      teamsDefaultDestination: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}teams_default_destination'],
-      ),
     );
   }
 
@@ -1616,14 +1562,10 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
   final int id;
   final int dailyTargetMinutes;
   final int allowedBreakMinutes;
-  final bool teamsEnabled;
-  final String? teamsDefaultDestination;
   const AppSetting({
     required this.id,
     required this.dailyTargetMinutes,
     required this.allowedBreakMinutes,
-    required this.teamsEnabled,
-    this.teamsDefaultDestination,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1631,12 +1573,6 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     map['id'] = Variable<int>(id);
     map['daily_target_minutes'] = Variable<int>(dailyTargetMinutes);
     map['allowed_break_minutes'] = Variable<int>(allowedBreakMinutes);
-    map['teams_enabled'] = Variable<bool>(teamsEnabled);
-    if (!nullToAbsent || teamsDefaultDestination != null) {
-      map['teams_default_destination'] = Variable<String>(
-        teamsDefaultDestination,
-      );
-    }
     return map;
   }
 
@@ -1645,10 +1581,6 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       id: Value(id),
       dailyTargetMinutes: Value(dailyTargetMinutes),
       allowedBreakMinutes: Value(allowedBreakMinutes),
-      teamsEnabled: Value(teamsEnabled),
-      teamsDefaultDestination: teamsDefaultDestination == null && nullToAbsent
-          ? const Value.absent()
-          : Value(teamsDefaultDestination),
     );
   }
 
@@ -1663,10 +1595,6 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       allowedBreakMinutes: serializer.fromJson<int>(
         json['allowedBreakMinutes'],
       ),
-      teamsEnabled: serializer.fromJson<bool>(json['teamsEnabled']),
-      teamsDefaultDestination: serializer.fromJson<String?>(
-        json['teamsDefaultDestination'],
-      ),
     );
   }
   @override
@@ -1676,10 +1604,6 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       'id': serializer.toJson<int>(id),
       'dailyTargetMinutes': serializer.toJson<int>(dailyTargetMinutes),
       'allowedBreakMinutes': serializer.toJson<int>(allowedBreakMinutes),
-      'teamsEnabled': serializer.toJson<bool>(teamsEnabled),
-      'teamsDefaultDestination': serializer.toJson<String?>(
-        teamsDefaultDestination,
-      ),
     };
   }
 
@@ -1687,16 +1611,10 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     int? id,
     int? dailyTargetMinutes,
     int? allowedBreakMinutes,
-    bool? teamsEnabled,
-    Value<String?> teamsDefaultDestination = const Value.absent(),
   }) => AppSetting(
     id: id ?? this.id,
     dailyTargetMinutes: dailyTargetMinutes ?? this.dailyTargetMinutes,
     allowedBreakMinutes: allowedBreakMinutes ?? this.allowedBreakMinutes,
-    teamsEnabled: teamsEnabled ?? this.teamsEnabled,
-    teamsDefaultDestination: teamsDefaultDestination.present
-        ? teamsDefaultDestination.value
-        : this.teamsDefaultDestination,
   );
   AppSetting copyWithCompanion(AppSettingsCompanion data) {
     return AppSetting(
@@ -1707,12 +1625,6 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       allowedBreakMinutes: data.allowedBreakMinutes.present
           ? data.allowedBreakMinutes.value
           : this.allowedBreakMinutes,
-      teamsEnabled: data.teamsEnabled.present
-          ? data.teamsEnabled.value
-          : this.teamsEnabled,
-      teamsDefaultDestination: data.teamsDefaultDestination.present
-          ? data.teamsDefaultDestination.value
-          : this.teamsDefaultDestination,
     );
   }
 
@@ -1721,58 +1633,40 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     return (StringBuffer('AppSetting(')
           ..write('id: $id, ')
           ..write('dailyTargetMinutes: $dailyTargetMinutes, ')
-          ..write('allowedBreakMinutes: $allowedBreakMinutes, ')
-          ..write('teamsEnabled: $teamsEnabled, ')
-          ..write('teamsDefaultDestination: $teamsDefaultDestination')
+          ..write('allowedBreakMinutes: $allowedBreakMinutes')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-    id,
-    dailyTargetMinutes,
-    allowedBreakMinutes,
-    teamsEnabled,
-    teamsDefaultDestination,
-  );
+  int get hashCode => Object.hash(id, dailyTargetMinutes, allowedBreakMinutes);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is AppSetting &&
           other.id == this.id &&
           other.dailyTargetMinutes == this.dailyTargetMinutes &&
-          other.allowedBreakMinutes == this.allowedBreakMinutes &&
-          other.teamsEnabled == this.teamsEnabled &&
-          other.teamsDefaultDestination == this.teamsDefaultDestination);
+          other.allowedBreakMinutes == this.allowedBreakMinutes);
 }
 
 class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   final Value<int> id;
   final Value<int> dailyTargetMinutes;
   final Value<int> allowedBreakMinutes;
-  final Value<bool> teamsEnabled;
-  final Value<String?> teamsDefaultDestination;
   const AppSettingsCompanion({
     this.id = const Value.absent(),
     this.dailyTargetMinutes = const Value.absent(),
     this.allowedBreakMinutes = const Value.absent(),
-    this.teamsEnabled = const Value.absent(),
-    this.teamsDefaultDestination = const Value.absent(),
   });
   AppSettingsCompanion.insert({
     this.id = const Value.absent(),
     this.dailyTargetMinutes = const Value.absent(),
     this.allowedBreakMinutes = const Value.absent(),
-    this.teamsEnabled = const Value.absent(),
-    this.teamsDefaultDestination = const Value.absent(),
   });
   static Insertable<AppSetting> custom({
     Expression<int>? id,
     Expression<int>? dailyTargetMinutes,
     Expression<int>? allowedBreakMinutes,
-    Expression<bool>? teamsEnabled,
-    Expression<String>? teamsDefaultDestination,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1780,9 +1674,6 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
         'daily_target_minutes': dailyTargetMinutes,
       if (allowedBreakMinutes != null)
         'allowed_break_minutes': allowedBreakMinutes,
-      if (teamsEnabled != null) 'teams_enabled': teamsEnabled,
-      if (teamsDefaultDestination != null)
-        'teams_default_destination': teamsDefaultDestination,
     });
   }
 
@@ -1790,16 +1681,11 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Value<int>? id,
     Value<int>? dailyTargetMinutes,
     Value<int>? allowedBreakMinutes,
-    Value<bool>? teamsEnabled,
-    Value<String?>? teamsDefaultDestination,
   }) {
     return AppSettingsCompanion(
       id: id ?? this.id,
       dailyTargetMinutes: dailyTargetMinutes ?? this.dailyTargetMinutes,
       allowedBreakMinutes: allowedBreakMinutes ?? this.allowedBreakMinutes,
-      teamsEnabled: teamsEnabled ?? this.teamsEnabled,
-      teamsDefaultDestination:
-          teamsDefaultDestination ?? this.teamsDefaultDestination,
     );
   }
 
@@ -1815,14 +1701,6 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     if (allowedBreakMinutes.present) {
       map['allowed_break_minutes'] = Variable<int>(allowedBreakMinutes.value);
     }
-    if (teamsEnabled.present) {
-      map['teams_enabled'] = Variable<bool>(teamsEnabled.value);
-    }
-    if (teamsDefaultDestination.present) {
-      map['teams_default_destination'] = Variable<String>(
-        teamsDefaultDestination.value,
-      );
-    }
     return map;
   }
 
@@ -1831,20 +1709,17 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     return (StringBuffer('AppSettingsCompanion(')
           ..write('id: $id, ')
           ..write('dailyTargetMinutes: $dailyTargetMinutes, ')
-          ..write('allowedBreakMinutes: $allowedBreakMinutes, ')
-          ..write('teamsEnabled: $teamsEnabled, ')
-          ..write('teamsDefaultDestination: $teamsDefaultDestination')
+          ..write('allowedBreakMinutes: $allowedBreakMinutes')
           ..write(')'))
         .toString();
   }
 }
 
-class $TeamsTriggerConfigsTable extends TeamsTriggerConfigs
-    with TableInfo<$TeamsTriggerConfigsTable, TeamsTriggerConfig> {
+class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $TeamsTriggerConfigsTable(this.attachedDatabase, [this._alias]);
+  $TasksTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -1858,539 +1733,93 @@ class $TeamsTriggerConfigsTable extends TeamsTriggerConfigs
       'PRIMARY KEY AUTOINCREMENT',
     ),
   );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
   @override
-  late final GeneratedColumnWithTypeConverter<TeamsTrigger, String> trigger =
-      GeneratedColumn<String>(
-        'trigger',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<TeamsTrigger>(
-        $TeamsTriggerConfigsTable.$convertertrigger,
-      );
-  static const VerificationMeta _breakTypeIdMeta = const VerificationMeta(
-    'breakTypeId',
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 120,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _dueAtMeta = const VerificationMeta('dueAt');
+  @override
+  late final GeneratedColumn<DateTime> dueAt = GeneratedColumn<DateTime>(
+    'due_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _locationNameMeta = const VerificationMeta(
+    'locationName',
   );
   @override
-  late final GeneratedColumn<int> breakTypeId = GeneratedColumn<int>(
-    'break_type_id',
+  late final GeneratedColumn<String> locationName = GeneratedColumn<String>(
+    'location_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _latitudeMeta = const VerificationMeta(
+    'latitude',
+  );
+  @override
+  late final GeneratedColumn<double> latitude = GeneratedColumn<double>(
+    'latitude',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _longitudeMeta = const VerificationMeta(
+    'longitude',
+  );
+  @override
+  late final GeneratedColumn<double> longitude = GeneratedColumn<double>(
+    'longitude',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _radiusMetersMeta = const VerificationMeta(
+    'radiusMeters',
+  );
+  @override
+  late final GeneratedColumn<int> radiusMeters = GeneratedColumn<int>(
+    'radius_meters',
     aliasedName,
     true,
     type: DriftSqlType.int,
     requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES break_types (id)',
-    ),
   );
-  static const VerificationMeta _enabledMeta = const VerificationMeta(
-    'enabled',
-  );
+  static const VerificationMeta _isDoneMeta = const VerificationMeta('isDone');
   @override
-  late final GeneratedColumn<bool> enabled = GeneratedColumn<bool>(
-    'enabled',
+  late final GeneratedColumn<bool> isDone = GeneratedColumn<bool>(
+    'is_done',
     aliasedName,
     false,
     type: DriftSqlType.bool,
     requiredDuringInsert: false,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("enabled" IN (0, 1))',
+      'CHECK ("is_done" IN (0, 1))',
     ),
     defaultValue: const Constant(false),
-  );
-  static const VerificationMeta _messageTemplateMeta = const VerificationMeta(
-    'messageTemplate',
-  );
-  @override
-  late final GeneratedColumn<String> messageTemplate = GeneratedColumn<String>(
-    'message_template',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(''),
-  );
-  static const VerificationMeta _destinationMeta = const VerificationMeta(
-    'destination',
-  );
-  @override
-  late final GeneratedColumn<String> destination = GeneratedColumn<String>(
-    'destination',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    trigger,
-    breakTypeId,
-    enabled,
-    messageTemplate,
-    destination,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'teams_trigger_configs';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<TeamsTriggerConfig> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('break_type_id')) {
-      context.handle(
-        _breakTypeIdMeta,
-        breakTypeId.isAcceptableOrUnknown(
-          data['break_type_id']!,
-          _breakTypeIdMeta,
-        ),
-      );
-    }
-    if (data.containsKey('enabled')) {
-      context.handle(
-        _enabledMeta,
-        enabled.isAcceptableOrUnknown(data['enabled']!, _enabledMeta),
-      );
-    }
-    if (data.containsKey('message_template')) {
-      context.handle(
-        _messageTemplateMeta,
-        messageTemplate.isAcceptableOrUnknown(
-          data['message_template']!,
-          _messageTemplateMeta,
-        ),
-      );
-    }
-    if (data.containsKey('destination')) {
-      context.handle(
-        _destinationMeta,
-        destination.isAcceptableOrUnknown(
-          data['destination']!,
-          _destinationMeta,
-        ),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  TeamsTriggerConfig map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return TeamsTriggerConfig(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}id'],
-      )!,
-      trigger: $TeamsTriggerConfigsTable.$convertertrigger.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}trigger'],
-        )!,
-      ),
-      breakTypeId: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}break_type_id'],
-      ),
-      enabled: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}enabled'],
-      )!,
-      messageTemplate: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}message_template'],
-      )!,
-      destination: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}destination'],
-      ),
-    );
-  }
-
-  @override
-  $TeamsTriggerConfigsTable createAlias(String alias) {
-    return $TeamsTriggerConfigsTable(attachedDatabase, alias);
-  }
-
-  static JsonTypeConverter2<TeamsTrigger, String, String> $convertertrigger =
-      const EnumNameConverter<TeamsTrigger>(TeamsTrigger.values);
-}
-
-class TeamsTriggerConfig extends DataClass
-    implements Insertable<TeamsTriggerConfig> {
-  final int id;
-  final TeamsTrigger trigger;
-  final int? breakTypeId;
-  final bool enabled;
-  final String messageTemplate;
-  final String? destination;
-  const TeamsTriggerConfig({
-    required this.id,
-    required this.trigger,
-    this.breakTypeId,
-    required this.enabled,
-    required this.messageTemplate,
-    this.destination,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
-    {
-      map['trigger'] = Variable<String>(
-        $TeamsTriggerConfigsTable.$convertertrigger.toSql(trigger),
-      );
-    }
-    if (!nullToAbsent || breakTypeId != null) {
-      map['break_type_id'] = Variable<int>(breakTypeId);
-    }
-    map['enabled'] = Variable<bool>(enabled);
-    map['message_template'] = Variable<String>(messageTemplate);
-    if (!nullToAbsent || destination != null) {
-      map['destination'] = Variable<String>(destination);
-    }
-    return map;
-  }
-
-  TeamsTriggerConfigsCompanion toCompanion(bool nullToAbsent) {
-    return TeamsTriggerConfigsCompanion(
-      id: Value(id),
-      trigger: Value(trigger),
-      breakTypeId: breakTypeId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(breakTypeId),
-      enabled: Value(enabled),
-      messageTemplate: Value(messageTemplate),
-      destination: destination == null && nullToAbsent
-          ? const Value.absent()
-          : Value(destination),
-    );
-  }
-
-  factory TeamsTriggerConfig.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return TeamsTriggerConfig(
-      id: serializer.fromJson<int>(json['id']),
-      trigger: $TeamsTriggerConfigsTable.$convertertrigger.fromJson(
-        serializer.fromJson<String>(json['trigger']),
-      ),
-      breakTypeId: serializer.fromJson<int?>(json['breakTypeId']),
-      enabled: serializer.fromJson<bool>(json['enabled']),
-      messageTemplate: serializer.fromJson<String>(json['messageTemplate']),
-      destination: serializer.fromJson<String?>(json['destination']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'trigger': serializer.toJson<String>(
-        $TeamsTriggerConfigsTable.$convertertrigger.toJson(trigger),
-      ),
-      'breakTypeId': serializer.toJson<int?>(breakTypeId),
-      'enabled': serializer.toJson<bool>(enabled),
-      'messageTemplate': serializer.toJson<String>(messageTemplate),
-      'destination': serializer.toJson<String?>(destination),
-    };
-  }
-
-  TeamsTriggerConfig copyWith({
-    int? id,
-    TeamsTrigger? trigger,
-    Value<int?> breakTypeId = const Value.absent(),
-    bool? enabled,
-    String? messageTemplate,
-    Value<String?> destination = const Value.absent(),
-  }) => TeamsTriggerConfig(
-    id: id ?? this.id,
-    trigger: trigger ?? this.trigger,
-    breakTypeId: breakTypeId.present ? breakTypeId.value : this.breakTypeId,
-    enabled: enabled ?? this.enabled,
-    messageTemplate: messageTemplate ?? this.messageTemplate,
-    destination: destination.present ? destination.value : this.destination,
-  );
-  TeamsTriggerConfig copyWithCompanion(TeamsTriggerConfigsCompanion data) {
-    return TeamsTriggerConfig(
-      id: data.id.present ? data.id.value : this.id,
-      trigger: data.trigger.present ? data.trigger.value : this.trigger,
-      breakTypeId: data.breakTypeId.present
-          ? data.breakTypeId.value
-          : this.breakTypeId,
-      enabled: data.enabled.present ? data.enabled.value : this.enabled,
-      messageTemplate: data.messageTemplate.present
-          ? data.messageTemplate.value
-          : this.messageTemplate,
-      destination: data.destination.present
-          ? data.destination.value
-          : this.destination,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('TeamsTriggerConfig(')
-          ..write('id: $id, ')
-          ..write('trigger: $trigger, ')
-          ..write('breakTypeId: $breakTypeId, ')
-          ..write('enabled: $enabled, ')
-          ..write('messageTemplate: $messageTemplate, ')
-          ..write('destination: $destination')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    id,
-    trigger,
-    breakTypeId,
-    enabled,
-    messageTemplate,
-    destination,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is TeamsTriggerConfig &&
-          other.id == this.id &&
-          other.trigger == this.trigger &&
-          other.breakTypeId == this.breakTypeId &&
-          other.enabled == this.enabled &&
-          other.messageTemplate == this.messageTemplate &&
-          other.destination == this.destination);
-}
-
-class TeamsTriggerConfigsCompanion extends UpdateCompanion<TeamsTriggerConfig> {
-  final Value<int> id;
-  final Value<TeamsTrigger> trigger;
-  final Value<int?> breakTypeId;
-  final Value<bool> enabled;
-  final Value<String> messageTemplate;
-  final Value<String?> destination;
-  const TeamsTriggerConfigsCompanion({
-    this.id = const Value.absent(),
-    this.trigger = const Value.absent(),
-    this.breakTypeId = const Value.absent(),
-    this.enabled = const Value.absent(),
-    this.messageTemplate = const Value.absent(),
-    this.destination = const Value.absent(),
-  });
-  TeamsTriggerConfigsCompanion.insert({
-    this.id = const Value.absent(),
-    required TeamsTrigger trigger,
-    this.breakTypeId = const Value.absent(),
-    this.enabled = const Value.absent(),
-    this.messageTemplate = const Value.absent(),
-    this.destination = const Value.absent(),
-  }) : trigger = Value(trigger);
-  static Insertable<TeamsTriggerConfig> custom({
-    Expression<int>? id,
-    Expression<String>? trigger,
-    Expression<int>? breakTypeId,
-    Expression<bool>? enabled,
-    Expression<String>? messageTemplate,
-    Expression<String>? destination,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (trigger != null) 'trigger': trigger,
-      if (breakTypeId != null) 'break_type_id': breakTypeId,
-      if (enabled != null) 'enabled': enabled,
-      if (messageTemplate != null) 'message_template': messageTemplate,
-      if (destination != null) 'destination': destination,
-    });
-  }
-
-  TeamsTriggerConfigsCompanion copyWith({
-    Value<int>? id,
-    Value<TeamsTrigger>? trigger,
-    Value<int?>? breakTypeId,
-    Value<bool>? enabled,
-    Value<String>? messageTemplate,
-    Value<String?>? destination,
-  }) {
-    return TeamsTriggerConfigsCompanion(
-      id: id ?? this.id,
-      trigger: trigger ?? this.trigger,
-      breakTypeId: breakTypeId ?? this.breakTypeId,
-      enabled: enabled ?? this.enabled,
-      messageTemplate: messageTemplate ?? this.messageTemplate,
-      destination: destination ?? this.destination,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<int>(id.value);
-    }
-    if (trigger.present) {
-      map['trigger'] = Variable<String>(
-        $TeamsTriggerConfigsTable.$convertertrigger.toSql(trigger.value),
-      );
-    }
-    if (breakTypeId.present) {
-      map['break_type_id'] = Variable<int>(breakTypeId.value);
-    }
-    if (enabled.present) {
-      map['enabled'] = Variable<bool>(enabled.value);
-    }
-    if (messageTemplate.present) {
-      map['message_template'] = Variable<String>(messageTemplate.value);
-    }
-    if (destination.present) {
-      map['destination'] = Variable<String>(destination.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('TeamsTriggerConfigsCompanion(')
-          ..write('id: $id, ')
-          ..write('trigger: $trigger, ')
-          ..write('breakTypeId: $breakTypeId, ')
-          ..write('enabled: $enabled, ')
-          ..write('messageTemplate: $messageTemplate, ')
-          ..write('destination: $destination')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $TeamsDeliveriesTable extends TeamsDeliveries
-    with TableInfo<$TeamsDeliveriesTable, TeamsDelivery> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $TeamsDeliveriesTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
-    'id',
-    aliasedName,
-    false,
-    hasAutoIncrement: true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
-  );
-  static const VerificationMeta _labelMeta = const VerificationMeta('label');
-  @override
-  late final GeneratedColumn<String> label = GeneratedColumn<String>(
-    'label',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _activityIdMeta = const VerificationMeta(
-    'activityId',
-  );
-  @override
-  late final GeneratedColumn<int> activityId = GeneratedColumn<int>(
-    'activity_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES activities (id)',
-    ),
-  );
-  static const VerificationMeta _messageMeta = const VerificationMeta(
-    'message',
-  );
-  @override
-  late final GeneratedColumn<String> message = GeneratedColumn<String>(
-    'message',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _destinationMeta = const VerificationMeta(
-    'destination',
-  );
-  @override
-  late final GeneratedColumn<String> destination = GeneratedColumn<String>(
-    'destination',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<DeliveryStatus, String> status =
-      GeneratedColumn<String>(
-        'status',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<DeliveryStatus>($TeamsDeliveriesTable.$converterstatus);
-  static const VerificationMeta _attemptsMeta = const VerificationMeta(
-    'attempts',
-  );
-  @override
-  late final GeneratedColumn<int> attempts = GeneratedColumn<int>(
-    'attempts',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(0),
-  );
-  static const VerificationMeta _nextAttemptAtMeta = const VerificationMeta(
-    'nextAttemptAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> nextAttemptAt =
-      GeneratedColumn<DateTime>(
-        'next_attempt_at',
-        aliasedName,
-        false,
-        type: DriftSqlType.dateTime,
-        requiredDuringInsert: true,
-      );
-  static const VerificationMeta _lastAttemptAtMeta = const VerificationMeta(
-    'lastAttemptAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> lastAttemptAt =
-      GeneratedColumn<DateTime>(
-        'last_attempt_at',
-        aliasedName,
-        true,
-        type: DriftSqlType.dateTime,
-        requiredDuringInsert: false,
-      );
-  static const VerificationMeta _lastErrorMeta = const VerificationMeta(
-    'lastError',
-  );
-  @override
-  late final GeneratedColumn<String> lastError = GeneratedColumn<String>(
-    'last_error',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
   );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
@@ -2401,30 +1830,30 @@ class $TeamsDeliveriesTable extends TeamsDeliveries
     aliasedName,
     false,
     type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
   );
   @override
   List<GeneratedColumn> get $columns => [
     id,
-    label,
-    activityId,
-    message,
-    destination,
-    status,
-    attempts,
-    nextAttemptAt,
-    lastAttemptAt,
-    lastError,
+    title,
+    notes,
+    dueAt,
+    locationName,
+    latitude,
+    longitude,
+    radiusMeters,
+    isDone,
     createdAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'teams_deliveries';
+  static const String $name = 'tasks';
   @override
   VerificationContext validateIntegrity(
-    Insertable<TeamsDelivery> instance, {
+    Insertable<Task> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -2432,69 +1861,60 @@ class $TeamsDeliveriesTable extends TeamsDeliveries
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
-    if (data.containsKey('label')) {
+    if (data.containsKey('title')) {
       context.handle(
-        _labelMeta,
-        label.isAcceptableOrUnknown(data['label']!, _labelMeta),
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
       );
     } else if (isInserting) {
-      context.missing(_labelMeta);
+      context.missing(_titleMeta);
     }
-    if (data.containsKey('activity_id')) {
+    if (data.containsKey('notes')) {
       context.handle(
-        _activityIdMeta,
-        activityId.isAcceptableOrUnknown(data['activity_id']!, _activityIdMeta),
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
       );
     }
-    if (data.containsKey('message')) {
+    if (data.containsKey('due_at')) {
       context.handle(
-        _messageMeta,
-        message.isAcceptableOrUnknown(data['message']!, _messageMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_messageMeta);
-    }
-    if (data.containsKey('destination')) {
-      context.handle(
-        _destinationMeta,
-        destination.isAcceptableOrUnknown(
-          data['destination']!,
-          _destinationMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_destinationMeta);
-    }
-    if (data.containsKey('attempts')) {
-      context.handle(
-        _attemptsMeta,
-        attempts.isAcceptableOrUnknown(data['attempts']!, _attemptsMeta),
+        _dueAtMeta,
+        dueAt.isAcceptableOrUnknown(data['due_at']!, _dueAtMeta),
       );
     }
-    if (data.containsKey('next_attempt_at')) {
+    if (data.containsKey('location_name')) {
       context.handle(
-        _nextAttemptAtMeta,
-        nextAttemptAt.isAcceptableOrUnknown(
-          data['next_attempt_at']!,
-          _nextAttemptAtMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_nextAttemptAtMeta);
-    }
-    if (data.containsKey('last_attempt_at')) {
-      context.handle(
-        _lastAttemptAtMeta,
-        lastAttemptAt.isAcceptableOrUnknown(
-          data['last_attempt_at']!,
-          _lastAttemptAtMeta,
+        _locationNameMeta,
+        locationName.isAcceptableOrUnknown(
+          data['location_name']!,
+          _locationNameMeta,
         ),
       );
     }
-    if (data.containsKey('last_error')) {
+    if (data.containsKey('latitude')) {
       context.handle(
-        _lastErrorMeta,
-        lastError.isAcceptableOrUnknown(data['last_error']!, _lastErrorMeta),
+        _latitudeMeta,
+        latitude.isAcceptableOrUnknown(data['latitude']!, _latitudeMeta),
+      );
+    }
+    if (data.containsKey('longitude')) {
+      context.handle(
+        _longitudeMeta,
+        longitude.isAcceptableOrUnknown(data['longitude']!, _longitudeMeta),
+      );
+    }
+    if (data.containsKey('radius_meters')) {
+      context.handle(
+        _radiusMetersMeta,
+        radiusMeters.isAcceptableOrUnknown(
+          data['radius_meters']!,
+          _radiusMetersMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_done')) {
+      context.handle(
+        _isDoneMeta,
+        isDone.isAcceptableOrUnknown(data['is_done']!, _isDoneMeta),
       );
     }
     if (data.containsKey('created_at')) {
@@ -2502,8 +1922,6 @@ class $TeamsDeliveriesTable extends TeamsDeliveries
         _createdAtMeta,
         createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
       );
-    } else if (isInserting) {
-      context.missing(_createdAtMeta);
     }
     return context;
   }
@@ -2511,51 +1929,45 @@ class $TeamsDeliveriesTable extends TeamsDeliveries
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  TeamsDelivery map(Map<String, dynamic> data, {String? tablePrefix}) {
+  Task map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return TeamsDelivery(
+    return Task(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
-      label: attachedDatabase.typeMapping.read(
+      title: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}label'],
+        data['${effectivePrefix}title'],
       )!,
-      activityId: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}activity_id'],
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
       ),
-      message: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}message'],
-      )!,
-      destination: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}destination'],
-      )!,
-      status: $TeamsDeliveriesTable.$converterstatus.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}status'],
-        )!,
-      ),
-      attempts: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}attempts'],
-      )!,
-      nextAttemptAt: attachedDatabase.typeMapping.read(
+      dueAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
-        data['${effectivePrefix}next_attempt_at'],
-      )!,
-      lastAttemptAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}last_attempt_at'],
+        data['${effectivePrefix}due_at'],
       ),
-      lastError: attachedDatabase.typeMapping.read(
+      locationName: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}last_error'],
+        data['${effectivePrefix}location_name'],
       ),
+      latitude: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}latitude'],
+      ),
+      longitude: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}longitude'],
+      ),
+      radiusMeters: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}radius_meters'],
+      ),
+      isDone: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_done'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -2564,106 +1976,104 @@ class $TeamsDeliveriesTable extends TeamsDeliveries
   }
 
   @override
-  $TeamsDeliveriesTable createAlias(String alias) {
-    return $TeamsDeliveriesTable(attachedDatabase, alias);
+  $TasksTable createAlias(String alias) {
+    return $TasksTable(attachedDatabase, alias);
   }
-
-  static JsonTypeConverter2<DeliveryStatus, String, String> $converterstatus =
-      const EnumNameConverter<DeliveryStatus>(DeliveryStatus.values);
 }
 
-class TeamsDelivery extends DataClass implements Insertable<TeamsDelivery> {
+class Task extends DataClass implements Insertable<Task> {
   final int id;
-  final String label;
-  final int? activityId;
-  final String message;
-  final String destination;
-  final DeliveryStatus status;
-  final int attempts;
-  final DateTime nextAttemptAt;
-  final DateTime? lastAttemptAt;
-  final String? lastError;
+  final String title;
+  final String? notes;
+  final DateTime? dueAt;
+  final String? locationName;
+  final double? latitude;
+  final double? longitude;
+  final int? radiusMeters;
+  final bool isDone;
   final DateTime createdAt;
-  const TeamsDelivery({
+  const Task({
     required this.id,
-    required this.label,
-    this.activityId,
-    required this.message,
-    required this.destination,
-    required this.status,
-    required this.attempts,
-    required this.nextAttemptAt,
-    this.lastAttemptAt,
-    this.lastError,
+    required this.title,
+    this.notes,
+    this.dueAt,
+    this.locationName,
+    this.latitude,
+    this.longitude,
+    this.radiusMeters,
+    required this.isDone,
     required this.createdAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
-    map['label'] = Variable<String>(label);
-    if (!nullToAbsent || activityId != null) {
-      map['activity_id'] = Variable<int>(activityId);
+    map['title'] = Variable<String>(title);
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
     }
-    map['message'] = Variable<String>(message);
-    map['destination'] = Variable<String>(destination);
-    {
-      map['status'] = Variable<String>(
-        $TeamsDeliveriesTable.$converterstatus.toSql(status),
-      );
+    if (!nullToAbsent || dueAt != null) {
+      map['due_at'] = Variable<DateTime>(dueAt);
     }
-    map['attempts'] = Variable<int>(attempts);
-    map['next_attempt_at'] = Variable<DateTime>(nextAttemptAt);
-    if (!nullToAbsent || lastAttemptAt != null) {
-      map['last_attempt_at'] = Variable<DateTime>(lastAttemptAt);
+    if (!nullToAbsent || locationName != null) {
+      map['location_name'] = Variable<String>(locationName);
     }
-    if (!nullToAbsent || lastError != null) {
-      map['last_error'] = Variable<String>(lastError);
+    if (!nullToAbsent || latitude != null) {
+      map['latitude'] = Variable<double>(latitude);
     }
+    if (!nullToAbsent || longitude != null) {
+      map['longitude'] = Variable<double>(longitude);
+    }
+    if (!nullToAbsent || radiusMeters != null) {
+      map['radius_meters'] = Variable<int>(radiusMeters);
+    }
+    map['is_done'] = Variable<bool>(isDone);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
 
-  TeamsDeliveriesCompanion toCompanion(bool nullToAbsent) {
-    return TeamsDeliveriesCompanion(
+  TasksCompanion toCompanion(bool nullToAbsent) {
+    return TasksCompanion(
       id: Value(id),
-      label: Value(label),
-      activityId: activityId == null && nullToAbsent
+      title: Value(title),
+      notes: notes == null && nullToAbsent
           ? const Value.absent()
-          : Value(activityId),
-      message: Value(message),
-      destination: Value(destination),
-      status: Value(status),
-      attempts: Value(attempts),
-      nextAttemptAt: Value(nextAttemptAt),
-      lastAttemptAt: lastAttemptAt == null && nullToAbsent
+          : Value(notes),
+      dueAt: dueAt == null && nullToAbsent
           ? const Value.absent()
-          : Value(lastAttemptAt),
-      lastError: lastError == null && nullToAbsent
+          : Value(dueAt),
+      locationName: locationName == null && nullToAbsent
           ? const Value.absent()
-          : Value(lastError),
+          : Value(locationName),
+      latitude: latitude == null && nullToAbsent
+          ? const Value.absent()
+          : Value(latitude),
+      longitude: longitude == null && nullToAbsent
+          ? const Value.absent()
+          : Value(longitude),
+      radiusMeters: radiusMeters == null && nullToAbsent
+          ? const Value.absent()
+          : Value(radiusMeters),
+      isDone: Value(isDone),
       createdAt: Value(createdAt),
     );
   }
 
-  factory TeamsDelivery.fromJson(
+  factory Task.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return TeamsDelivery(
+    return Task(
       id: serializer.fromJson<int>(json['id']),
-      label: serializer.fromJson<String>(json['label']),
-      activityId: serializer.fromJson<int?>(json['activityId']),
-      message: serializer.fromJson<String>(json['message']),
-      destination: serializer.fromJson<String>(json['destination']),
-      status: $TeamsDeliveriesTable.$converterstatus.fromJson(
-        serializer.fromJson<String>(json['status']),
-      ),
-      attempts: serializer.fromJson<int>(json['attempts']),
-      nextAttemptAt: serializer.fromJson<DateTime>(json['nextAttemptAt']),
-      lastAttemptAt: serializer.fromJson<DateTime?>(json['lastAttemptAt']),
-      lastError: serializer.fromJson<String?>(json['lastError']),
+      title: serializer.fromJson<String>(json['title']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      dueAt: serializer.fromJson<DateTime?>(json['dueAt']),
+      locationName: serializer.fromJson<String?>(json['locationName']),
+      latitude: serializer.fromJson<double?>(json['latitude']),
+      longitude: serializer.fromJson<double?>(json['longitude']),
+      radiusMeters: serializer.fromJson<int?>(json['radiusMeters']),
+      isDone: serializer.fromJson<bool>(json['isDone']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -2672,85 +2082,72 @@ class TeamsDelivery extends DataClass implements Insertable<TeamsDelivery> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
-      'label': serializer.toJson<String>(label),
-      'activityId': serializer.toJson<int?>(activityId),
-      'message': serializer.toJson<String>(message),
-      'destination': serializer.toJson<String>(destination),
-      'status': serializer.toJson<String>(
-        $TeamsDeliveriesTable.$converterstatus.toJson(status),
-      ),
-      'attempts': serializer.toJson<int>(attempts),
-      'nextAttemptAt': serializer.toJson<DateTime>(nextAttemptAt),
-      'lastAttemptAt': serializer.toJson<DateTime?>(lastAttemptAt),
-      'lastError': serializer.toJson<String?>(lastError),
+      'title': serializer.toJson<String>(title),
+      'notes': serializer.toJson<String?>(notes),
+      'dueAt': serializer.toJson<DateTime?>(dueAt),
+      'locationName': serializer.toJson<String?>(locationName),
+      'latitude': serializer.toJson<double?>(latitude),
+      'longitude': serializer.toJson<double?>(longitude),
+      'radiusMeters': serializer.toJson<int?>(radiusMeters),
+      'isDone': serializer.toJson<bool>(isDone),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
 
-  TeamsDelivery copyWith({
+  Task copyWith({
     int? id,
-    String? label,
-    Value<int?> activityId = const Value.absent(),
-    String? message,
-    String? destination,
-    DeliveryStatus? status,
-    int? attempts,
-    DateTime? nextAttemptAt,
-    Value<DateTime?> lastAttemptAt = const Value.absent(),
-    Value<String?> lastError = const Value.absent(),
+    String? title,
+    Value<String?> notes = const Value.absent(),
+    Value<DateTime?> dueAt = const Value.absent(),
+    Value<String?> locationName = const Value.absent(),
+    Value<double?> latitude = const Value.absent(),
+    Value<double?> longitude = const Value.absent(),
+    Value<int?> radiusMeters = const Value.absent(),
+    bool? isDone,
     DateTime? createdAt,
-  }) => TeamsDelivery(
+  }) => Task(
     id: id ?? this.id,
-    label: label ?? this.label,
-    activityId: activityId.present ? activityId.value : this.activityId,
-    message: message ?? this.message,
-    destination: destination ?? this.destination,
-    status: status ?? this.status,
-    attempts: attempts ?? this.attempts,
-    nextAttemptAt: nextAttemptAt ?? this.nextAttemptAt,
-    lastAttemptAt: lastAttemptAt.present
-        ? lastAttemptAt.value
-        : this.lastAttemptAt,
-    lastError: lastError.present ? lastError.value : this.lastError,
+    title: title ?? this.title,
+    notes: notes.present ? notes.value : this.notes,
+    dueAt: dueAt.present ? dueAt.value : this.dueAt,
+    locationName: locationName.present ? locationName.value : this.locationName,
+    latitude: latitude.present ? latitude.value : this.latitude,
+    longitude: longitude.present ? longitude.value : this.longitude,
+    radiusMeters: radiusMeters.present ? radiusMeters.value : this.radiusMeters,
+    isDone: isDone ?? this.isDone,
     createdAt: createdAt ?? this.createdAt,
   );
-  TeamsDelivery copyWithCompanion(TeamsDeliveriesCompanion data) {
-    return TeamsDelivery(
+  Task copyWithCompanion(TasksCompanion data) {
+    return Task(
       id: data.id.present ? data.id.value : this.id,
-      label: data.label.present ? data.label.value : this.label,
-      activityId: data.activityId.present
-          ? data.activityId.value
-          : this.activityId,
-      message: data.message.present ? data.message.value : this.message,
-      destination: data.destination.present
-          ? data.destination.value
-          : this.destination,
-      status: data.status.present ? data.status.value : this.status,
-      attempts: data.attempts.present ? data.attempts.value : this.attempts,
-      nextAttemptAt: data.nextAttemptAt.present
-          ? data.nextAttemptAt.value
-          : this.nextAttemptAt,
-      lastAttemptAt: data.lastAttemptAt.present
-          ? data.lastAttemptAt.value
-          : this.lastAttemptAt,
-      lastError: data.lastError.present ? data.lastError.value : this.lastError,
+      title: data.title.present ? data.title.value : this.title,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      dueAt: data.dueAt.present ? data.dueAt.value : this.dueAt,
+      locationName: data.locationName.present
+          ? data.locationName.value
+          : this.locationName,
+      latitude: data.latitude.present ? data.latitude.value : this.latitude,
+      longitude: data.longitude.present ? data.longitude.value : this.longitude,
+      radiusMeters: data.radiusMeters.present
+          ? data.radiusMeters.value
+          : this.radiusMeters,
+      isDone: data.isDone.present ? data.isDone.value : this.isDone,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
 
   @override
   String toString() {
-    return (StringBuffer('TeamsDelivery(')
+    return (StringBuffer('Task(')
           ..write('id: $id, ')
-          ..write('label: $label, ')
-          ..write('activityId: $activityId, ')
-          ..write('message: $message, ')
-          ..write('destination: $destination, ')
-          ..write('status: $status, ')
-          ..write('attempts: $attempts, ')
-          ..write('nextAttemptAt: $nextAttemptAt, ')
-          ..write('lastAttemptAt: $lastAttemptAt, ')
-          ..write('lastError: $lastError, ')
+          ..write('title: $title, ')
+          ..write('notes: $notes, ')
+          ..write('dueAt: $dueAt, ')
+          ..write('locationName: $locationName, ')
+          ..write('latitude: $latitude, ')
+          ..write('longitude: $longitude, ')
+          ..write('radiusMeters: $radiusMeters, ')
+          ..write('isDone: $isDone, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -2759,129 +2156,115 @@ class TeamsDelivery extends DataClass implements Insertable<TeamsDelivery> {
   @override
   int get hashCode => Object.hash(
     id,
-    label,
-    activityId,
-    message,
-    destination,
-    status,
-    attempts,
-    nextAttemptAt,
-    lastAttemptAt,
-    lastError,
+    title,
+    notes,
+    dueAt,
+    locationName,
+    latitude,
+    longitude,
+    radiusMeters,
+    isDone,
     createdAt,
   );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is TeamsDelivery &&
+      (other is Task &&
           other.id == this.id &&
-          other.label == this.label &&
-          other.activityId == this.activityId &&
-          other.message == this.message &&
-          other.destination == this.destination &&
-          other.status == this.status &&
-          other.attempts == this.attempts &&
-          other.nextAttemptAt == this.nextAttemptAt &&
-          other.lastAttemptAt == this.lastAttemptAt &&
-          other.lastError == this.lastError &&
+          other.title == this.title &&
+          other.notes == this.notes &&
+          other.dueAt == this.dueAt &&
+          other.locationName == this.locationName &&
+          other.latitude == this.latitude &&
+          other.longitude == this.longitude &&
+          other.radiusMeters == this.radiusMeters &&
+          other.isDone == this.isDone &&
           other.createdAt == this.createdAt);
 }
 
-class TeamsDeliveriesCompanion extends UpdateCompanion<TeamsDelivery> {
+class TasksCompanion extends UpdateCompanion<Task> {
   final Value<int> id;
-  final Value<String> label;
-  final Value<int?> activityId;
-  final Value<String> message;
-  final Value<String> destination;
-  final Value<DeliveryStatus> status;
-  final Value<int> attempts;
-  final Value<DateTime> nextAttemptAt;
-  final Value<DateTime?> lastAttemptAt;
-  final Value<String?> lastError;
+  final Value<String> title;
+  final Value<String?> notes;
+  final Value<DateTime?> dueAt;
+  final Value<String?> locationName;
+  final Value<double?> latitude;
+  final Value<double?> longitude;
+  final Value<int?> radiusMeters;
+  final Value<bool> isDone;
   final Value<DateTime> createdAt;
-  const TeamsDeliveriesCompanion({
+  const TasksCompanion({
     this.id = const Value.absent(),
-    this.label = const Value.absent(),
-    this.activityId = const Value.absent(),
-    this.message = const Value.absent(),
-    this.destination = const Value.absent(),
-    this.status = const Value.absent(),
-    this.attempts = const Value.absent(),
-    this.nextAttemptAt = const Value.absent(),
-    this.lastAttemptAt = const Value.absent(),
-    this.lastError = const Value.absent(),
+    this.title = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.dueAt = const Value.absent(),
+    this.locationName = const Value.absent(),
+    this.latitude = const Value.absent(),
+    this.longitude = const Value.absent(),
+    this.radiusMeters = const Value.absent(),
+    this.isDone = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
-  TeamsDeliveriesCompanion.insert({
+  TasksCompanion.insert({
     this.id = const Value.absent(),
-    required String label,
-    this.activityId = const Value.absent(),
-    required String message,
-    required String destination,
-    required DeliveryStatus status,
-    this.attempts = const Value.absent(),
-    required DateTime nextAttemptAt,
-    this.lastAttemptAt = const Value.absent(),
-    this.lastError = const Value.absent(),
-    required DateTime createdAt,
-  }) : label = Value(label),
-       message = Value(message),
-       destination = Value(destination),
-       status = Value(status),
-       nextAttemptAt = Value(nextAttemptAt),
-       createdAt = Value(createdAt);
-  static Insertable<TeamsDelivery> custom({
+    required String title,
+    this.notes = const Value.absent(),
+    this.dueAt = const Value.absent(),
+    this.locationName = const Value.absent(),
+    this.latitude = const Value.absent(),
+    this.longitude = const Value.absent(),
+    this.radiusMeters = const Value.absent(),
+    this.isDone = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : title = Value(title);
+  static Insertable<Task> custom({
     Expression<int>? id,
-    Expression<String>? label,
-    Expression<int>? activityId,
-    Expression<String>? message,
-    Expression<String>? destination,
-    Expression<String>? status,
-    Expression<int>? attempts,
-    Expression<DateTime>? nextAttemptAt,
-    Expression<DateTime>? lastAttemptAt,
-    Expression<String>? lastError,
+    Expression<String>? title,
+    Expression<String>? notes,
+    Expression<DateTime>? dueAt,
+    Expression<String>? locationName,
+    Expression<double>? latitude,
+    Expression<double>? longitude,
+    Expression<int>? radiusMeters,
+    Expression<bool>? isDone,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
-      if (label != null) 'label': label,
-      if (activityId != null) 'activity_id': activityId,
-      if (message != null) 'message': message,
-      if (destination != null) 'destination': destination,
-      if (status != null) 'status': status,
-      if (attempts != null) 'attempts': attempts,
-      if (nextAttemptAt != null) 'next_attempt_at': nextAttemptAt,
-      if (lastAttemptAt != null) 'last_attempt_at': lastAttemptAt,
-      if (lastError != null) 'last_error': lastError,
+      if (title != null) 'title': title,
+      if (notes != null) 'notes': notes,
+      if (dueAt != null) 'due_at': dueAt,
+      if (locationName != null) 'location_name': locationName,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+      if (radiusMeters != null) 'radius_meters': radiusMeters,
+      if (isDone != null) 'is_done': isDone,
       if (createdAt != null) 'created_at': createdAt,
     });
   }
 
-  TeamsDeliveriesCompanion copyWith({
+  TasksCompanion copyWith({
     Value<int>? id,
-    Value<String>? label,
-    Value<int?>? activityId,
-    Value<String>? message,
-    Value<String>? destination,
-    Value<DeliveryStatus>? status,
-    Value<int>? attempts,
-    Value<DateTime>? nextAttemptAt,
-    Value<DateTime?>? lastAttemptAt,
-    Value<String?>? lastError,
+    Value<String>? title,
+    Value<String?>? notes,
+    Value<DateTime?>? dueAt,
+    Value<String?>? locationName,
+    Value<double?>? latitude,
+    Value<double?>? longitude,
+    Value<int?>? radiusMeters,
+    Value<bool>? isDone,
     Value<DateTime>? createdAt,
   }) {
-    return TeamsDeliveriesCompanion(
+    return TasksCompanion(
       id: id ?? this.id,
-      label: label ?? this.label,
-      activityId: activityId ?? this.activityId,
-      message: message ?? this.message,
-      destination: destination ?? this.destination,
-      status: status ?? this.status,
-      attempts: attempts ?? this.attempts,
-      nextAttemptAt: nextAttemptAt ?? this.nextAttemptAt,
-      lastAttemptAt: lastAttemptAt ?? this.lastAttemptAt,
-      lastError: lastError ?? this.lastError,
+      title: title ?? this.title,
+      notes: notes ?? this.notes,
+      dueAt: dueAt ?? this.dueAt,
+      locationName: locationName ?? this.locationName,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      radiusMeters: radiusMeters ?? this.radiusMeters,
+      isDone: isDone ?? this.isDone,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -2892,34 +2275,29 @@ class TeamsDeliveriesCompanion extends UpdateCompanion<TeamsDelivery> {
     if (id.present) {
       map['id'] = Variable<int>(id.value);
     }
-    if (label.present) {
-      map['label'] = Variable<String>(label.value);
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
     }
-    if (activityId.present) {
-      map['activity_id'] = Variable<int>(activityId.value);
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
     }
-    if (message.present) {
-      map['message'] = Variable<String>(message.value);
+    if (dueAt.present) {
+      map['due_at'] = Variable<DateTime>(dueAt.value);
     }
-    if (destination.present) {
-      map['destination'] = Variable<String>(destination.value);
+    if (locationName.present) {
+      map['location_name'] = Variable<String>(locationName.value);
     }
-    if (status.present) {
-      map['status'] = Variable<String>(
-        $TeamsDeliveriesTable.$converterstatus.toSql(status.value),
-      );
+    if (latitude.present) {
+      map['latitude'] = Variable<double>(latitude.value);
     }
-    if (attempts.present) {
-      map['attempts'] = Variable<int>(attempts.value);
+    if (longitude.present) {
+      map['longitude'] = Variable<double>(longitude.value);
     }
-    if (nextAttemptAt.present) {
-      map['next_attempt_at'] = Variable<DateTime>(nextAttemptAt.value);
+    if (radiusMeters.present) {
+      map['radius_meters'] = Variable<int>(radiusMeters.value);
     }
-    if (lastAttemptAt.present) {
-      map['last_attempt_at'] = Variable<DateTime>(lastAttemptAt.value);
-    }
-    if (lastError.present) {
-      map['last_error'] = Variable<String>(lastError.value);
+    if (isDone.present) {
+      map['is_done'] = Variable<bool>(isDone.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
@@ -2929,17 +2307,16 @@ class TeamsDeliveriesCompanion extends UpdateCompanion<TeamsDelivery> {
 
   @override
   String toString() {
-    return (StringBuffer('TeamsDeliveriesCompanion(')
+    return (StringBuffer('TasksCompanion(')
           ..write('id: $id, ')
-          ..write('label: $label, ')
-          ..write('activityId: $activityId, ')
-          ..write('message: $message, ')
-          ..write('destination: $destination, ')
-          ..write('status: $status, ')
-          ..write('attempts: $attempts, ')
-          ..write('nextAttemptAt: $nextAttemptAt, ')
-          ..write('lastAttemptAt: $lastAttemptAt, ')
-          ..write('lastError: $lastError, ')
+          ..write('title: $title, ')
+          ..write('notes: $notes, ')
+          ..write('dueAt: $dueAt, ')
+          ..write('locationName: $locationName, ')
+          ..write('latitude: $latitude, ')
+          ..write('longitude: $longitude, ')
+          ..write('radiusMeters: $radiusMeters, ')
+          ..write('isDone: $isDone, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -2952,11 +2329,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $BreakTypesTable breakTypes = $BreakTypesTable(this);
   late final $ActivitiesTable activities = $ActivitiesTable(this);
   late final $AppSettingsTable appSettings = $AppSettingsTable(this);
-  late final $TeamsTriggerConfigsTable teamsTriggerConfigs =
-      $TeamsTriggerConfigsTable(this);
-  late final $TeamsDeliveriesTable teamsDeliveries = $TeamsDeliveriesTable(
-    this,
-  );
+  late final $TasksTable tasks = $TasksTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2965,8 +2338,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     breakTypes,
     activities,
     appSettings,
-    teamsTriggerConfigs,
-    teamsDeliveries,
+    tasks,
   ];
 }
 
@@ -3022,30 +2394,6 @@ final class $$BreakTypesTableReferences
     ).filter((f) => f.breakTypeId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_activitiesRefsTable($_db));
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-
-  static MultiTypedResultKey<
-    $TeamsTriggerConfigsTable,
-    List<TeamsTriggerConfig>
-  >
-  _teamsTriggerConfigsRefsTable(_$AppDatabase db) =>
-      MultiTypedResultKey.fromTable(
-        db.teamsTriggerConfigs,
-        aliasName: 'break_types__id__teams_trigger_configs__break_type_id',
-      );
-
-  $$TeamsTriggerConfigsTableProcessedTableManager get teamsTriggerConfigsRefs {
-    final manager = $$TeamsTriggerConfigsTableTableManager(
-      $_db,
-      $_db.teamsTriggerConfigs,
-    ).filter((f) => f.breakTypeId.id.sqlEquals($_itemColumn<int>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(
-      _teamsTriggerConfigsRefsTable($_db),
-    );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -3155,31 +2503,6 @@ class $$BreakTypesTableFilterComposer
           }) => $$ActivitiesTableFilterComposer(
             $db: $db,
             $table: $db.activities,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
-  Expression<bool> teamsTriggerConfigsRefs(
-    Expression<bool> Function($$TeamsTriggerConfigsTableFilterComposer f) f,
-  ) {
-    final $$TeamsTriggerConfigsTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.teamsTriggerConfigs,
-      getReferencedColumn: (t) => t.breakTypeId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$TeamsTriggerConfigsTableFilterComposer(
-            $db: $db,
-            $table: $db.teamsTriggerConfigs,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3376,32 +2699,6 @@ class $$BreakTypesTableAnnotationComposer
     );
     return f(composer);
   }
-
-  Expression<T> teamsTriggerConfigsRefs<T extends Object>(
-    Expression<T> Function($$TeamsTriggerConfigsTableAnnotationComposer a) f,
-  ) {
-    final $$TeamsTriggerConfigsTableAnnotationComposer composer =
-        $composerBuilder(
-          composer: this,
-          getCurrentColumn: (t) => t.id,
-          referencedTable: $db.teamsTriggerConfigs,
-          getReferencedColumn: (t) => t.breakTypeId,
-          builder:
-              (
-                joinBuilder, {
-                $addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer,
-              }) => $$TeamsTriggerConfigsTableAnnotationComposer(
-                $db: $db,
-                $table: $db.teamsTriggerConfigs,
-                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                joinBuilder: joinBuilder,
-                $removeJoinBuilderFromRootComposer:
-                    $removeJoinBuilderFromRootComposer,
-              ),
-        );
-    return f(composer);
-  }
 }
 
 class $$BreakTypesTableTableManager
@@ -3417,10 +2714,7 @@ class $$BreakTypesTableTableManager
           $$BreakTypesTableUpdateCompanionBuilder,
           (BreakType, $$BreakTypesTableReferences),
           BreakType,
-          PrefetchHooks Function({
-            bool activitiesRefs,
-            bool teamsTriggerConfigsRefs,
-          })
+          PrefetchHooks Function({bool activitiesRefs})
         > {
   $$BreakTypesTableTableManager(_$AppDatabase db, $BreakTypesTable table)
     : super(
@@ -3511,61 +2805,37 @@ class $$BreakTypesTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback:
-              ({activitiesRefs = false, teamsTriggerConfigsRefs = false}) {
-                return PrefetchHooks(
-                  db: db,
-                  explicitlyWatchedTables: [
-                    if (activitiesRefs) db.activities,
-                    if (teamsTriggerConfigsRefs) db.teamsTriggerConfigs,
-                  ],
-                  addJoins: null,
-                  getPrefetchedDataCallback: (items) async {
-                    return [
-                      if (activitiesRefs)
-                        await $_getPrefetchedDataByColumns<
-                          BreakType,
-                          $BreakTypesTable,
-                          Activity,
-                          $ActivitiesTable
-                        >(
-                          currentTable: table,
-                          referencedTable: $$BreakTypesTableReferences
-                              ._activitiesRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$BreakTypesTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).activitiesRefs,
-                          currentColumn: 'id',
-                          referencedColumn: 'break_type_id',
-                          typedResults: items,
-                        ),
-                      if (teamsTriggerConfigsRefs)
-                        await $_getPrefetchedDataByColumns<
-                          BreakType,
-                          $BreakTypesTable,
-                          TeamsTriggerConfig,
-                          $TeamsTriggerConfigsTable
-                        >(
-                          currentTable: table,
-                          referencedTable: $$BreakTypesTableReferences
-                              ._teamsTriggerConfigsRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$BreakTypesTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).teamsTriggerConfigsRefs,
-                          currentColumn: 'id',
-                          referencedColumn: 'break_type_id',
-                          typedResults: items,
-                        ),
-                    ];
-                  },
-                );
+          prefetchHooksCallback: ({activitiesRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (activitiesRefs) db.activities],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (activitiesRefs)
+                    await $_getPrefetchedDataByColumns<
+                      BreakType,
+                      $BreakTypesTable,
+                      Activity,
+                      $ActivitiesTable
+                    >(
+                      currentTable: table,
+                      referencedTable: $$BreakTypesTableReferences
+                          ._activitiesRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$BreakTypesTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).activitiesRefs,
+                      currentColumn: 'id',
+                      referencedColumn: 'break_type_id',
+                      typedResults: items,
+                    ),
+                ];
               },
+            );
+          },
         ),
       );
 }
@@ -3582,10 +2852,7 @@ typedef $$BreakTypesTableProcessedTableManager =
       $$BreakTypesTableUpdateCompanionBuilder,
       (BreakType, $$BreakTypesTableReferences),
       BreakType,
-      PrefetchHooks Function({
-        bool activitiesRefs,
-        bool teamsTriggerConfigsRefs,
-      })
+      PrefetchHooks Function({bool activitiesRefs})
     >;
 typedef $$ActivitiesTableCreateCompanionBuilder = ActivitiesCompanion Function({
   Value<int> id,
@@ -3626,26 +2893,6 @@ final class $$ActivitiesTableReferences
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-
-  static MultiTypedResultKey<$TeamsDeliveriesTable, List<TeamsDelivery>>
-  _teamsDeliveriesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.teamsDeliveries,
-    aliasName: 'activities__id__teams_deliveries__activity_id',
-  );
-
-  $$TeamsDeliveriesTableProcessedTableManager get teamsDeliveriesRefs {
-    final manager = $$TeamsDeliveriesTableTableManager(
-      $_db,
-      $_db.teamsDeliveries,
-    ).filter((f) => f.activityId.id.sqlEquals($_itemColumn<int>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(
-      _teamsDeliveriesRefsTable($_db),
-    );
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
     );
   }
 }
@@ -3716,31 +2963,6 @@ class $$ActivitiesTableFilterComposer
           ),
     );
     return composer;
-  }
-
-  Expression<bool> teamsDeliveriesRefs(
-    Expression<bool> Function($$TeamsDeliveriesTableFilterComposer f) f,
-  ) {
-    final $$TeamsDeliveriesTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.teamsDeliveries,
-      getReferencedColumn: (t) => t.activityId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$TeamsDeliveriesTableFilterComposer(
-            $db: $db,
-            $table: $db.teamsDeliveries,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
   }
 }
 
@@ -3868,31 +3090,6 @@ class $$ActivitiesTableAnnotationComposer
     );
     return composer;
   }
-
-  Expression<T> teamsDeliveriesRefs<T extends Object>(
-    Expression<T> Function($$TeamsDeliveriesTableAnnotationComposer a) f,
-  ) {
-    final $$TeamsDeliveriesTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.teamsDeliveries,
-      getReferencedColumn: (t) => t.activityId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$TeamsDeliveriesTableAnnotationComposer(
-            $db: $db,
-            $table: $db.teamsDeliveries,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
 }
 
 class $$ActivitiesTableTableManager
@@ -3908,7 +3105,7 @@ class $$ActivitiesTableTableManager
           $$ActivitiesTableUpdateCompanionBuilder,
           (Activity, $$ActivitiesTableReferences),
           Activity,
-          PrefetchHooks Function({bool breakTypeId, bool teamsDeliveriesRefs})
+          PrefetchHooks Function({bool breakTypeId})
         > {
   $$ActivitiesTableTableManager(_$AppDatabase db, $ActivitiesTable table)
     : super(
@@ -3969,69 +3166,45 @@ class $$ActivitiesTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback:
-              ({breakTypeId = false, teamsDeliveriesRefs = false}) {
-                return PrefetchHooks(
-                  db: db,
-                  explicitlyWatchedTables: [
-                    if (teamsDeliveriesRefs) db.teamsDeliveries,
-                  ],
-                  addJoins:
-                      <
-                        T extends TableManagerState<
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic,
-                          dynamic
-                        >
-                      >(state) {
-                        if (breakTypeId) {
-                          state = state.withJoin(
-                            currentTable: table,
-                            currentColumn: table.breakTypeId,
-                            referencedTable: $$ActivitiesTableReferences
-                                ._breakTypeIdTable(db),
-                            referencedColumn: $$ActivitiesTableReferences
-                                ._breakTypeIdTable(db)
-                                .id,
-                          ) as T;
-                        }
+          prefetchHooksCallback: ({breakTypeId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (breakTypeId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.breakTypeId,
+                        referencedTable: $$ActivitiesTableReferences
+                            ._breakTypeIdTable(db),
+                        referencedColumn: $$ActivitiesTableReferences
+                            ._breakTypeIdTable(db)
+                            .id,
+                      ) as T;
+                    }
 
-                        return state;
-                      },
-                  getPrefetchedDataCallback: (items) async {
-                    return [
-                      if (teamsDeliveriesRefs)
-                        await $_getPrefetchedDataByColumns<
-                          Activity,
-                          $ActivitiesTable,
-                          TeamsDelivery,
-                          $TeamsDeliveriesTable
-                        >(
-                          currentTable: table,
-                          referencedTable: $$ActivitiesTableReferences
-                              ._teamsDeliveriesRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$ActivitiesTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).teamsDeliveriesRefs,
-                          currentColumn: 'id',
-                          referencedColumn: 'activity_id',
-                          typedResults: items,
-                        ),
-                    ];
+                    return state;
                   },
-                );
+              getPrefetchedDataCallback: (items) async {
+                return [];
               },
+            );
+          },
         ),
       );
 }
@@ -4048,23 +3221,19 @@ typedef $$ActivitiesTableProcessedTableManager =
       $$ActivitiesTableUpdateCompanionBuilder,
       (Activity, $$ActivitiesTableReferences),
       Activity,
-      PrefetchHooks Function({bool breakTypeId, bool teamsDeliveriesRefs})
+      PrefetchHooks Function({bool breakTypeId})
     >;
 typedef $$AppSettingsTableCreateCompanionBuilder =
     AppSettingsCompanion Function({
       Value<int> id,
       Value<int> dailyTargetMinutes,
       Value<int> allowedBreakMinutes,
-      Value<bool> teamsEnabled,
-      Value<String?> teamsDefaultDestination,
     });
 typedef $$AppSettingsTableUpdateCompanionBuilder =
     AppSettingsCompanion Function({
       Value<int> id,
       Value<int> dailyTargetMinutes,
       Value<int> allowedBreakMinutes,
-      Value<bool> teamsEnabled,
-      Value<String?> teamsDefaultDestination,
     });
 
 class $$AppSettingsTableFilterComposer
@@ -4088,16 +3257,6 @@ class $$AppSettingsTableFilterComposer
 
   ColumnFilters<int> get allowedBreakMinutes => $composableBuilder(
     column: $table.allowedBreakMinutes,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get teamsEnabled => $composableBuilder(
-    column: $table.teamsEnabled,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get teamsDefaultDestination => $composableBuilder(
-    column: $table.teamsDefaultDestination,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -4125,16 +3284,6 @@ class $$AppSettingsTableOrderingComposer
     column: $table.allowedBreakMinutes,
     builder: (column) => ColumnOrderings(column),
   );
-
-  ColumnOrderings<bool> get teamsEnabled => $composableBuilder(
-    column: $table.teamsEnabled,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get teamsDefaultDestination => $composableBuilder(
-    column: $table.teamsDefaultDestination,
-    builder: (column) => ColumnOrderings(column),
-  );
 }
 
 class $$AppSettingsTableAnnotationComposer
@@ -4156,16 +3305,6 @@ class $$AppSettingsTableAnnotationComposer
 
   GeneratedColumn<int> get allowedBreakMinutes => $composableBuilder(
     column: $table.allowedBreakMinutes,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<bool> get teamsEnabled => $composableBuilder(
-    column: $table.teamsEnabled,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get teamsDefaultDestination => $composableBuilder(
-    column: $table.teamsDefaultDestination,
     builder: (column) => column,
   );
 }
@@ -4204,28 +3343,20 @@ class $$AppSettingsTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<int> dailyTargetMinutes = const Value.absent(),
                 Value<int> allowedBreakMinutes = const Value.absent(),
-                Value<bool> teamsEnabled = const Value.absent(),
-                Value<String?> teamsDefaultDestination = const Value.absent(),
               }) => AppSettingsCompanion(
                 id: id,
                 dailyTargetMinutes: dailyTargetMinutes,
                 allowedBreakMinutes: allowedBreakMinutes,
-                teamsEnabled: teamsEnabled,
-                teamsDefaultDestination: teamsDefaultDestination,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 Value<int> dailyTargetMinutes = const Value.absent(),
                 Value<int> allowedBreakMinutes = const Value.absent(),
-                Value<bool> teamsEnabled = const Value.absent(),
-                Value<String?> teamsDefaultDestination = const Value.absent(),
               }) => AppSettingsCompanion.insert(
                 id: id,
                 dailyTargetMinutes: dailyTargetMinutes,
                 allowedBreakMinutes: allowedBreakMinutes,
-                teamsEnabled: teamsEnabled,
-                teamsDefaultDestination: teamsDefaultDestination,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -4261,59 +3392,33 @@ typedef $$AppSettingsTableProcessedTableManager =
       AppSetting,
       PrefetchHooks Function()
     >;
-typedef $$TeamsTriggerConfigsTableCreateCompanionBuilder =
-    TeamsTriggerConfigsCompanion Function({
-      Value<int> id,
-      required TeamsTrigger trigger,
-      Value<int?> breakTypeId,
-      Value<bool> enabled,
-      Value<String> messageTemplate,
-      Value<String?> destination,
-    });
-typedef $$TeamsTriggerConfigsTableUpdateCompanionBuilder =
-    TeamsTriggerConfigsCompanion Function({
-      Value<int> id,
-      Value<TeamsTrigger> trigger,
-      Value<int?> breakTypeId,
-      Value<bool> enabled,
-      Value<String> messageTemplate,
-      Value<String?> destination,
-    });
+typedef $$TasksTableCreateCompanionBuilder = TasksCompanion Function({
+  Value<int> id,
+  required String title,
+  Value<String?> notes,
+  Value<DateTime?> dueAt,
+  Value<String?> locationName,
+  Value<double?> latitude,
+  Value<double?> longitude,
+  Value<int?> radiusMeters,
+  Value<bool> isDone,
+  Value<DateTime> createdAt,
+});
+typedef $$TasksTableUpdateCompanionBuilder = TasksCompanion Function({
+  Value<int> id,
+  Value<String> title,
+  Value<String?> notes,
+  Value<DateTime?> dueAt,
+  Value<String?> locationName,
+  Value<double?> latitude,
+  Value<double?> longitude,
+  Value<int?> radiusMeters,
+  Value<bool> isDone,
+  Value<DateTime> createdAt,
+});
 
-final class $$TeamsTriggerConfigsTableReferences
-    extends
-        BaseReferences<
-          _$AppDatabase,
-          $TeamsTriggerConfigsTable,
-          TeamsTriggerConfig
-        > {
-  $$TeamsTriggerConfigsTableReferences(
-    super.$_db,
-    super.$_table,
-    super.$_typedResult,
-  );
-
-  static $BreakTypesTable _breakTypeIdTable(_$AppDatabase db) => db.breakTypes
-      .createAlias('teams_trigger_configs__break_type_id__break_types__id');
-
-  $$BreakTypesTableProcessedTableManager? get breakTypeId {
-    final $_column = $_itemColumn<int>('break_type_id');
-    if ($_column == null) return null;
-    final manager = $$BreakTypesTableTableManager(
-      $_db,
-      $_db.breakTypes,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_breakTypeIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-}
-
-class $$TeamsTriggerConfigsTableFilterComposer
-    extends Composer<_$AppDatabase, $TeamsTriggerConfigsTable> {
-  $$TeamsTriggerConfigsTableFilterComposer({
+class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
+  $$TasksTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -4325,402 +3430,43 @@ class $$TeamsTriggerConfigsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnWithTypeConverterFilters<TeamsTrigger, TeamsTrigger, String>
-  get trigger => $composableBuilder(
-    column: $table.trigger,
-    builder: (column) => ColumnWithTypeConverterFilters(column),
-  );
-
-  ColumnFilters<bool> get enabled => $composableBuilder(
-    column: $table.enabled,
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get messageTemplate => $composableBuilder(
-    column: $table.messageTemplate,
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get destination => $composableBuilder(
-    column: $table.destination,
+  ColumnFilters<DateTime> get dueAt => $composableBuilder(
+    column: $table.dueAt,
     builder: (column) => ColumnFilters(column),
   );
 
-  $$BreakTypesTableFilterComposer get breakTypeId {
-    final $$BreakTypesTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.breakTypeId,
-      referencedTable: $db.breakTypes,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$BreakTypesTableFilterComposer(
-            $db: $db,
-            $table: $db.breakTypes,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$TeamsTriggerConfigsTableOrderingComposer
-    extends Composer<_$AppDatabase, $TeamsTriggerConfigsTable> {
-  $$TeamsTriggerConfigsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get trigger => $composableBuilder(
-    column: $table.trigger,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get enabled => $composableBuilder(
-    column: $table.enabled,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get messageTemplate => $composableBuilder(
-    column: $table.messageTemplate,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get destination => $composableBuilder(
-    column: $table.destination,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  $$BreakTypesTableOrderingComposer get breakTypeId {
-    final $$BreakTypesTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.breakTypeId,
-      referencedTable: $db.breakTypes,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$BreakTypesTableOrderingComposer(
-            $db: $db,
-            $table: $db.breakTypes,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$TeamsTriggerConfigsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $TeamsTriggerConfigsTable> {
-  $$TeamsTriggerConfigsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<int> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumnWithTypeConverter<TeamsTrigger, String> get trigger =>
-      $composableBuilder(column: $table.trigger, builder: (column) => column);
-
-  GeneratedColumn<bool> get enabled =>
-      $composableBuilder(column: $table.enabled, builder: (column) => column);
-
-  GeneratedColumn<String> get messageTemplate => $composableBuilder(
-    column: $table.messageTemplate,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get destination => $composableBuilder(
-    column: $table.destination,
-    builder: (column) => column,
-  );
-
-  $$BreakTypesTableAnnotationComposer get breakTypeId {
-    final $$BreakTypesTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.breakTypeId,
-      referencedTable: $db.breakTypes,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$BreakTypesTableAnnotationComposer(
-            $db: $db,
-            $table: $db.breakTypes,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$TeamsTriggerConfigsTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $TeamsTriggerConfigsTable,
-          TeamsTriggerConfig,
-          $$TeamsTriggerConfigsTableFilterComposer,
-          $$TeamsTriggerConfigsTableOrderingComposer,
-          $$TeamsTriggerConfigsTableAnnotationComposer,
-          $$TeamsTriggerConfigsTableCreateCompanionBuilder,
-          $$TeamsTriggerConfigsTableUpdateCompanionBuilder,
-          (TeamsTriggerConfig, $$TeamsTriggerConfigsTableReferences),
-          TeamsTriggerConfig,
-          PrefetchHooks Function({bool breakTypeId})
-        > {
-  $$TeamsTriggerConfigsTableTableManager(
-    _$AppDatabase db,
-    $TeamsTriggerConfigsTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$TeamsTriggerConfigsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$TeamsTriggerConfigsTableOrderingComposer(
-                $db: db,
-                $table: table,
-              ),
-          createComputedFieldComposer: () =>
-              $$TeamsTriggerConfigsTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
-          updateCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                Value<TeamsTrigger> trigger = const Value.absent(),
-                Value<int?> breakTypeId = const Value.absent(),
-                Value<bool> enabled = const Value.absent(),
-                Value<String> messageTemplate = const Value.absent(),
-                Value<String?> destination = const Value.absent(),
-              }) => TeamsTriggerConfigsCompanion(
-                id: id,
-                trigger: trigger,
-                breakTypeId: breakTypeId,
-                enabled: enabled,
-                messageTemplate: messageTemplate,
-                destination: destination,
-              ),
-          createCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                required TeamsTrigger trigger,
-                Value<int?> breakTypeId = const Value.absent(),
-                Value<bool> enabled = const Value.absent(),
-                Value<String> messageTemplate = const Value.absent(),
-                Value<String?> destination = const Value.absent(),
-              }) => TeamsTriggerConfigsCompanion.insert(
-                id: id,
-                trigger: trigger,
-                breakTypeId: breakTypeId,
-                enabled: enabled,
-                messageTemplate: messageTemplate,
-                destination: destination,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable<$TeamsTriggerConfigsTable, TeamsTriggerConfig>(
-                    table,
-                  ),
-                  $$TeamsTriggerConfigsTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback: ({breakTypeId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (breakTypeId) {
-                      state = state.withJoin(
-                        currentTable: table,
-                        currentColumn: table.breakTypeId,
-                        referencedTable: $$TeamsTriggerConfigsTableReferences
-                            ._breakTypeIdTable(db),
-                        referencedColumn: $$TeamsTriggerConfigsTableReferences
-                            ._breakTypeIdTable(db)
-                            .id,
-                      ) as T;
-                    }
-
-                    return state;
-                  },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
-        ),
-      );
-}
-
-typedef $$TeamsTriggerConfigsTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $TeamsTriggerConfigsTable,
-      TeamsTriggerConfig,
-      $$TeamsTriggerConfigsTableFilterComposer,
-      $$TeamsTriggerConfigsTableOrderingComposer,
-      $$TeamsTriggerConfigsTableAnnotationComposer,
-      $$TeamsTriggerConfigsTableCreateCompanionBuilder,
-      $$TeamsTriggerConfigsTableUpdateCompanionBuilder,
-      (TeamsTriggerConfig, $$TeamsTriggerConfigsTableReferences),
-      TeamsTriggerConfig,
-      PrefetchHooks Function({bool breakTypeId})
-    >;
-typedef $$TeamsDeliveriesTableCreateCompanionBuilder =
-    TeamsDeliveriesCompanion Function({
-      Value<int> id,
-      required String label,
-      Value<int?> activityId,
-      required String message,
-      required String destination,
-      required DeliveryStatus status,
-      Value<int> attempts,
-      required DateTime nextAttemptAt,
-      Value<DateTime?> lastAttemptAt,
-      Value<String?> lastError,
-      required DateTime createdAt,
-    });
-typedef $$TeamsDeliveriesTableUpdateCompanionBuilder =
-    TeamsDeliveriesCompanion Function({
-      Value<int> id,
-      Value<String> label,
-      Value<int?> activityId,
-      Value<String> message,
-      Value<String> destination,
-      Value<DeliveryStatus> status,
-      Value<int> attempts,
-      Value<DateTime> nextAttemptAt,
-      Value<DateTime?> lastAttemptAt,
-      Value<String?> lastError,
-      Value<DateTime> createdAt,
-    });
-
-final class $$TeamsDeliveriesTableReferences
-    extends
-        BaseReferences<_$AppDatabase, $TeamsDeliveriesTable, TeamsDelivery> {
-  $$TeamsDeliveriesTableReferences(
-    super.$_db,
-    super.$_table,
-    super.$_typedResult,
-  );
-
-  static $ActivitiesTable _activityIdTable(_$AppDatabase db) => db.activities
-      .createAlias('teams_deliveries__activity_id__activities__id');
-
-  $$ActivitiesTableProcessedTableManager? get activityId {
-    final $_column = $_itemColumn<int>('activity_id');
-    if ($_column == null) return null;
-    final manager = $$ActivitiesTableTableManager(
-      $_db,
-      $_db.activities,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_activityIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-}
-
-class $$TeamsDeliveriesTableFilterComposer
-    extends Composer<_$AppDatabase, $TeamsDeliveriesTable> {
-  $$TeamsDeliveriesTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<int> get id => $composableBuilder(
-    column: $table.id,
+  ColumnFilters<String> get locationName => $composableBuilder(
+    column: $table.locationName,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get label => $composableBuilder(
-    column: $table.label,
+  ColumnFilters<double> get latitude => $composableBuilder(
+    column: $table.latitude,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get message => $composableBuilder(
-    column: $table.message,
+  ColumnFilters<double> get longitude => $composableBuilder(
+    column: $table.longitude,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get destination => $composableBuilder(
-    column: $table.destination,
+  ColumnFilters<int> get radiusMeters => $composableBuilder(
+    column: $table.radiusMeters,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnWithTypeConverterFilters<DeliveryStatus, DeliveryStatus, String>
-  get status => $composableBuilder(
-    column: $table.status,
-    builder: (column) => ColumnWithTypeConverterFilters(column),
-  );
-
-  ColumnFilters<int> get attempts => $composableBuilder(
-    column: $table.attempts,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get nextAttemptAt => $composableBuilder(
-    column: $table.nextAttemptAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get lastAttemptAt => $composableBuilder(
-    column: $table.lastAttemptAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get lastError => $composableBuilder(
-    column: $table.lastError,
+  ColumnFilters<bool> get isDone => $composableBuilder(
+    column: $table.isDone,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4728,34 +3474,11 @@ class $$TeamsDeliveriesTableFilterComposer
     column: $table.createdAt,
     builder: (column) => ColumnFilters(column),
   );
-
-  $$ActivitiesTableFilterComposer get activityId {
-    final $$ActivitiesTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.activityId,
-      referencedTable: $db.activities,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ActivitiesTableFilterComposer(
-            $db: $db,
-            $table: $db.activities,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
 }
 
-class $$TeamsDeliveriesTableOrderingComposer
-    extends Composer<_$AppDatabase, $TeamsDeliveriesTable> {
-  $$TeamsDeliveriesTableOrderingComposer({
+class $$TasksTableOrderingComposer
+    extends Composer<_$AppDatabase, $TasksTable> {
+  $$TasksTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -4767,43 +3490,43 @@ class $$TeamsDeliveriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get label => $composableBuilder(
-    column: $table.label,
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get message => $composableBuilder(
-    column: $table.message,
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get destination => $composableBuilder(
-    column: $table.destination,
+  ColumnOrderings<DateTime> get dueAt => $composableBuilder(
+    column: $table.dueAt,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get status => $composableBuilder(
-    column: $table.status,
+  ColumnOrderings<String> get locationName => $composableBuilder(
+    column: $table.locationName,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get attempts => $composableBuilder(
-    column: $table.attempts,
+  ColumnOrderings<double> get latitude => $composableBuilder(
+    column: $table.latitude,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<DateTime> get nextAttemptAt => $composableBuilder(
-    column: $table.nextAttemptAt,
+  ColumnOrderings<double> get longitude => $composableBuilder(
+    column: $table.longitude,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<DateTime> get lastAttemptAt => $composableBuilder(
-    column: $table.lastAttemptAt,
+  ColumnOrderings<int> get radiusMeters => $composableBuilder(
+    column: $table.radiusMeters,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get lastError => $composableBuilder(
-    column: $table.lastError,
+  ColumnOrderings<bool> get isDone => $composableBuilder(
+    column: $table.isDone,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -4811,34 +3534,11 @@ class $$TeamsDeliveriesTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
-
-  $$ActivitiesTableOrderingComposer get activityId {
-    final $$ActivitiesTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.activityId,
-      referencedTable: $db.activities,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ActivitiesTableOrderingComposer(
-            $db: $db,
-            $table: $db.activities,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
 }
 
-class $$TeamsDeliveriesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $TeamsDeliveriesTable> {
-  $$TeamsDeliveriesTableAnnotationComposer({
+class $$TasksTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TasksTable> {
+  $$TasksTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -4848,207 +3548,142 @@ class $$TeamsDeliveriesTableAnnotationComposer
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<String> get label =>
-      $composableBuilder(column: $table.label, builder: (column) => column);
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
 
-  GeneratedColumn<String> get message =>
-      $composableBuilder(column: $table.message, builder: (column) => column);
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
 
-  GeneratedColumn<String> get destination => $composableBuilder(
-    column: $table.destination,
+  GeneratedColumn<DateTime> get dueAt =>
+      $composableBuilder(column: $table.dueAt, builder: (column) => column);
+
+  GeneratedColumn<String> get locationName => $composableBuilder(
+    column: $table.locationName,
     builder: (column) => column,
   );
 
-  GeneratedColumnWithTypeConverter<DeliveryStatus, String> get status =>
-      $composableBuilder(column: $table.status, builder: (column) => column);
+  GeneratedColumn<double> get latitude =>
+      $composableBuilder(column: $table.latitude, builder: (column) => column);
 
-  GeneratedColumn<int> get attempts =>
-      $composableBuilder(column: $table.attempts, builder: (column) => column);
+  GeneratedColumn<double> get longitude =>
+      $composableBuilder(column: $table.longitude, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get nextAttemptAt => $composableBuilder(
-    column: $table.nextAttemptAt,
+  GeneratedColumn<int> get radiusMeters => $composableBuilder(
+    column: $table.radiusMeters,
     builder: (column) => column,
   );
 
-  GeneratedColumn<DateTime> get lastAttemptAt => $composableBuilder(
-    column: $table.lastAttemptAt,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get lastError =>
-      $composableBuilder(column: $table.lastError, builder: (column) => column);
+  GeneratedColumn<bool> get isDone =>
+      $composableBuilder(column: $table.isDone, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  $$ActivitiesTableAnnotationComposer get activityId {
-    final $$ActivitiesTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.activityId,
-      referencedTable: $db.activities,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ActivitiesTableAnnotationComposer(
-            $db: $db,
-            $table: $db.activities,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
 }
 
-class $$TeamsDeliveriesTableTableManager
+class $$TasksTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $TeamsDeliveriesTable,
-          TeamsDelivery,
-          $$TeamsDeliveriesTableFilterComposer,
-          $$TeamsDeliveriesTableOrderingComposer,
-          $$TeamsDeliveriesTableAnnotationComposer,
-          $$TeamsDeliveriesTableCreateCompanionBuilder,
-          $$TeamsDeliveriesTableUpdateCompanionBuilder,
-          (TeamsDelivery, $$TeamsDeliveriesTableReferences),
-          TeamsDelivery,
-          PrefetchHooks Function({bool activityId})
+          $TasksTable,
+          Task,
+          $$TasksTableFilterComposer,
+          $$TasksTableOrderingComposer,
+          $$TasksTableAnnotationComposer,
+          $$TasksTableCreateCompanionBuilder,
+          $$TasksTableUpdateCompanionBuilder,
+          (Task, BaseReferences<_$AppDatabase, $TasksTable, Task>),
+          Task,
+          PrefetchHooks Function()
         > {
-  $$TeamsDeliveriesTableTableManager(
-    _$AppDatabase db,
-    $TeamsDeliveriesTable table,
-  ) : super(
+  $$TasksTableTableManager(_$AppDatabase db, $TasksTable table)
+    : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$TeamsDeliveriesTableFilterComposer($db: db, $table: table),
+              $$TasksTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$TeamsDeliveriesTableOrderingComposer($db: db, $table: table),
+              $$TasksTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$TeamsDeliveriesTableAnnotationComposer($db: db, $table: table),
+              $$TasksTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
-                Value<String> label = const Value.absent(),
-                Value<int?> activityId = const Value.absent(),
-                Value<String> message = const Value.absent(),
-                Value<String> destination = const Value.absent(),
-                Value<DeliveryStatus> status = const Value.absent(),
-                Value<int> attempts = const Value.absent(),
-                Value<DateTime> nextAttemptAt = const Value.absent(),
-                Value<DateTime?> lastAttemptAt = const Value.absent(),
-                Value<String?> lastError = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<DateTime?> dueAt = const Value.absent(),
+                Value<String?> locationName = const Value.absent(),
+                Value<double?> latitude = const Value.absent(),
+                Value<double?> longitude = const Value.absent(),
+                Value<int?> radiusMeters = const Value.absent(),
+                Value<bool> isDone = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
-              }) => TeamsDeliveriesCompanion(
+              }) => TasksCompanion(
                 id: id,
-                label: label,
-                activityId: activityId,
-                message: message,
-                destination: destination,
-                status: status,
-                attempts: attempts,
-                nextAttemptAt: nextAttemptAt,
-                lastAttemptAt: lastAttemptAt,
-                lastError: lastError,
+                title: title,
+                notes: notes,
+                dueAt: dueAt,
+                locationName: locationName,
+                latitude: latitude,
+                longitude: longitude,
+                radiusMeters: radiusMeters,
+                isDone: isDone,
                 createdAt: createdAt,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
-                required String label,
-                Value<int?> activityId = const Value.absent(),
-                required String message,
-                required String destination,
-                required DeliveryStatus status,
-                Value<int> attempts = const Value.absent(),
-                required DateTime nextAttemptAt,
-                Value<DateTime?> lastAttemptAt = const Value.absent(),
-                Value<String?> lastError = const Value.absent(),
-                required DateTime createdAt,
-              }) => TeamsDeliveriesCompanion.insert(
+                required String title,
+                Value<String?> notes = const Value.absent(),
+                Value<DateTime?> dueAt = const Value.absent(),
+                Value<String?> locationName = const Value.absent(),
+                Value<double?> latitude = const Value.absent(),
+                Value<double?> longitude = const Value.absent(),
+                Value<int?> radiusMeters = const Value.absent(),
+                Value<bool> isDone = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => TasksCompanion.insert(
                 id: id,
-                label: label,
-                activityId: activityId,
-                message: message,
-                destination: destination,
-                status: status,
-                attempts: attempts,
-                nextAttemptAt: nextAttemptAt,
-                lastAttemptAt: lastAttemptAt,
-                lastError: lastError,
+                title: title,
+                notes: notes,
+                dueAt: dueAt,
+                locationName: locationName,
+                latitude: latitude,
+                longitude: longitude,
+                radiusMeters: radiusMeters,
+                isDone: isDone,
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable<$TeamsDeliveriesTable, TeamsDelivery>(table),
-                  $$TeamsDeliveriesTableReferences(db, table, e),
+                  e.readTable<$TasksTable, Task>(table),
+                  BaseReferences<_$AppDatabase, $TasksTable, Task>(
+                    db,
+                    table,
+                    e,
+                  ),
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({activityId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (activityId) {
-                      state = state.withJoin(
-                        currentTable: table,
-                        currentColumn: table.activityId,
-                        referencedTable: $$TeamsDeliveriesTableReferences
-                            ._activityIdTable(db),
-                        referencedColumn: $$TeamsDeliveriesTableReferences
-                            ._activityIdTable(db)
-                            .id,
-                      ) as T;
-                    }
-
-                    return state;
-                  },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
+          prefetchHooksCallback: null,
         ),
       );
 }
 
-typedef $$TeamsDeliveriesTableProcessedTableManager =
+typedef $$TasksTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $TeamsDeliveriesTable,
-      TeamsDelivery,
-      $$TeamsDeliveriesTableFilterComposer,
-      $$TeamsDeliveriesTableOrderingComposer,
-      $$TeamsDeliveriesTableAnnotationComposer,
-      $$TeamsDeliveriesTableCreateCompanionBuilder,
-      $$TeamsDeliveriesTableUpdateCompanionBuilder,
-      (TeamsDelivery, $$TeamsDeliveriesTableReferences),
-      TeamsDelivery,
-      PrefetchHooks Function({bool activityId})
+      $TasksTable,
+      Task,
+      $$TasksTableFilterComposer,
+      $$TasksTableOrderingComposer,
+      $$TasksTableAnnotationComposer,
+      $$TasksTableCreateCompanionBuilder,
+      $$TasksTableUpdateCompanionBuilder,
+      (Task, BaseReferences<_$AppDatabase, $TasksTable, Task>),
+      Task,
+      PrefetchHooks Function()
     >;
 
 class $AppDatabaseManager {
@@ -5060,8 +3695,6 @@ class $AppDatabaseManager {
       $$ActivitiesTableTableManager(_db, _db.activities);
   $$AppSettingsTableTableManager get appSettings =>
       $$AppSettingsTableTableManager(_db, _db.appSettings);
-  $$TeamsTriggerConfigsTableTableManager get teamsTriggerConfigs =>
-      $$TeamsTriggerConfigsTableTableManager(_db, _db.teamsTriggerConfigs);
-  $$TeamsDeliveriesTableTableManager get teamsDeliveries =>
-      $$TeamsDeliveriesTableTableManager(_db, _db.teamsDeliveries);
+  $$TasksTableTableManager get tasks =>
+      $$TasksTableTableManager(_db, _db.tasks);
 }

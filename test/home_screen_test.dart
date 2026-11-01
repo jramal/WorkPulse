@@ -121,35 +121,6 @@ void main() {
     expect(find.text('Work'), findsOneWidget);
   });
 
-  testWidgets('Settings reaches the Teams screen and a trigger editor', (
-    tester,
-  ) async {
-    await _pumpApp(tester);
-
-    await tester.tap(find.text('Settings'));
-    await _settle(tester);
-    expect(find.text('Daily working target'), findsOneWidget);
-    expect(find.text('8h'), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('teams-setting')));
-    await tester.pump(const Duration(seconds: 1));
-    await tester.pump(const Duration(seconds: 1));
-    expect(find.text('Send Teams messages'), findsOneWidget);
-
-    await tester.dragUntilVisible(
-      find.text('Resume work'),
-      find.byType(ListView).last,
-      const Offset(0, -200),
-    );
-    await tester.ensureVisible(find.text('Resume work'));
-    await tester.pump(const Duration(seconds: 1));
-    await tester.tap(find.text('Resume work'));
-    await tester.pump(const Duration(seconds: 1));
-    await tester.pump(const Duration(seconds: 1));
-    expect(find.text('Send this message'), findsOneWidget);
-    expect(find.text('Back at work at {startTime}.'), findsOneWidget);
-  });
-
   testWidgets('a new break type can set up its alarm', (tester) async {
     await _pumpApp(tester);
 
@@ -163,10 +134,6 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
 
     expect(find.text('Expected break duration'), findsNothing);
-    expect(
-      find.text('Save this break type to set its Teams messages.'),
-      findsOneWidget,
-    );
 
     await tester.tap(find.byKey(const Key('alarm-enabled-switch')));
     await tester.pump(const Duration(seconds: 1));

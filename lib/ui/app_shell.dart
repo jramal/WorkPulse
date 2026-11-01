@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'history/history_screen.dart';
 import 'home/home_screen.dart';
 import 'settings/tracking_settings_screen.dart';
+import 'tasks/tasks_screen.dart';
 
-/// Home, History and Settings (CRS Section 10).
+/// Home, History, Tasks and Settings (CRS Section 10).
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -23,6 +24,7 @@ class _AppShellState extends State<AppShell> {
         children: const [
           HomeScreen(),
           HistoryScreen(),
+          TasksScreen(),
           TrackingSettingsScreen(),
         ],
       ),
@@ -38,6 +40,10 @@ class _AppShellState extends State<AppShell> {
           NavigationDestination(
             icon: Icon(Icons.history_rounded),
             label: 'History',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.task_alt_rounded),
+            label: 'Tasks',
           ),
           NavigationDestination(
             icon: Icon(Icons.tune_rounded),

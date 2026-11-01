@@ -24,9 +24,8 @@ Future<int?> showBreakPicker(BuildContext context, List<BreakType> types) {
             children: [
               Text(
                 'Start a break',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                style: Theme.of(context).textTheme.titleLarge
+                    ?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: AppSpacing.sm),
               if (types.isEmpty)

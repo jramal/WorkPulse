@@ -16,13 +16,16 @@ void main() {
 
   tearDown(() => db.close());
 
-  test('starting work creates a single open Working activity (FR-1.1)', () async {
-    await engine.startWork();
-    final open = await engine.watchOpenActivity().first;
-    expect(open, isNotNull);
-    expect(open!.kind, ActivityKind.work);
-    expect(open.endTime, isNull);
-  });
+  test(
+    'starting work creates a single open Working activity (FR-1.1)',
+    () async {
+      await engine.startWork();
+      final open = await engine.watchOpenActivity().first;
+      expect(open, isNotNull);
+      expect(open!.kind, ActivityKind.work);
+      expect(open.endTime, isNull);
+    },
+  );
 
   test(
     'starting a second activity while one is open is a no-op (FR-1.8)',
@@ -69,74 +72,72 @@ void main() {
     expect(open!.kind, ActivityKind.work);
   });
 
-  test('ending work closes whatever is open and leaves nothing open (FR-1.4)', () async {
-    await engine.startWork();
-    await engine.endWork();
-
-    final open = await engine.watchOpenActivity().first;
-    expect(open, isNull);
-  });
-
   test(
-    'summarize sums worked/break time and computes remaining vs overtime (FR-2.1-2.5)',
-    () {
-      final settings = AppSetting(
-        id: 0,
-        dailyTargetMinutes: 480,
-        allowedBreakMinutes: 60,
-        teamsEnabled: false,
-      );
-      final now = DateTime(2026, 1, 1, 12);
-      final activities = [
-        Activity(
-          id: 1,
-          kind: ActivityKind.work,
-          breakTypeId: null,
-          startTime: now.subtract(const Duration(hours: 3)),
-          endTime: now.subtract(const Duration(hours: 2)),
-          durationSeconds: 3600,
-          dayKey: dayKeyFor(now),
-        ),
-        Activity(
-          id: 2,
-          kind: ActivityKind.breakActivity,
-          breakTypeId: 1,
-          startTime: now.subtract(const Duration(hours: 2)),
-          endTime: now.subtract(const Duration(hours: 1, minutes: 45)),
-          durationSeconds: 900,
-          dayKey: dayKeyFor(now),
-        ),
-        // Still open: counts provisionally up to `now` (FR-2.6).
-        Activity(
-          id: 3,
-          kind: ActivityKind.work,
-          breakTypeId: null,
-          startTime: now.subtract(const Duration(hours: 1)),
-          endTime: null,
-          durationSeconds: null,
-          dayKey: dayKeyFor(now),
-        ),
-      ];
+    'ending work closes whatever is open and leaves nothing open (FR-1.4)',
+    () async {
+      await engine.startWork();
+      await engine.endWork();
 
-      final summary = engine.summarize(
-        activities: activities,
-        settings: settings,
-        now: now,
-      );
-
-      expect(summary.totalWorked, const Duration(hours: 2)); // 3600s + 1h open
-      expect(summary.totalBreak, const Duration(minutes: 15));
-      expect(summary.remaining, const Duration(hours: 6));
-      expect(summary.overtime, Duration.zero);
+      final open = await engine.watchOpenActivity().first;
+      expect(open, isNull);
     },
   );
+
+  test('summarize sums worked/break time and computes remaining vs overtime (FR-2.1-2.5)', () {
+    final settings = AppSetting(
+      id: 0,
+      dailyTargetMinutes: 480,
+      allowedBreakMinutes: 60,
+    );
+    final now = DateTime(2026, 1, 1, 12);
+    final activities = [
+      Activity(
+        id: 1,
+        kind: ActivityKind.work,
+        breakTypeId: null,
+        startTime: now.subtract(const Duration(hours: 3)),
+        endTime: now.subtract(const Duration(hours: 2)),
+        durationSeconds: 3600,
+        dayKey: dayKeyFor(now),
+      ),
+      Activity(
+        id: 2,
+        kind: ActivityKind.breakActivity,
+        breakTypeId: 1,
+        startTime: now.subtract(const Duration(hours: 2)),
+        endTime: now.subtract(const Duration(hours: 1, minutes: 45)),
+        durationSeconds: 900,
+        dayKey: dayKeyFor(now),
+      ),
+      // Still open: counts provisionally up to `now` (FR-2.6).
+      Activity(
+        id: 3,
+        kind: ActivityKind.work,
+        breakTypeId: null,
+        startTime: now.subtract(const Duration(hours: 1)),
+        endTime: null,
+        durationSeconds: null,
+        dayKey: dayKeyFor(now),
+      ),
+    ];
+
+    final summary = engine.summarize(
+      activities: activities,
+      settings: settings,
+      now: now,
+    );
+
+    expect(summary.totalWorked, const Duration(hours: 2)); // 3600s + 1h open
+    expect(summary.totalBreak, const Duration(minutes: 15));
+    expect(summary.remaining, const Duration(hours: 6));
+    expect(summary.overtime, Duration.zero);
+  });
 
   group('expected finish', () {
     final settings = AppSetting(
       id: 0,
       dailyTargetMinutes: 480,
       allowedBreakMinutes: 60,
-      teamsEnabled: false,
     );
 
     Activity activity(
@@ -260,7 +261,6 @@ void main() {
       id: 0,
       dailyTargetMinutes: 60,
       allowedBreakMinutes: 60,
-      teamsEnabled: false,
     );
     final now = DateTime(2026, 1, 1, 12);
     final activities = [

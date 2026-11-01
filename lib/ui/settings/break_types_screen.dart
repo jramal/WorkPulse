@@ -8,7 +8,6 @@ import '../../domain/time_format.dart';
 import '../../theme/app_theme.dart';
 import '../widgets/duration_picker.dart';
 import '../widgets/setting_tile.dart';
-import 'teams_settings_screen.dart';
 
 /// Add, edit and delete break types (FR-1.6/FR-1.7).
 class BreakTypesScreen extends StatefulWidget {
@@ -128,7 +127,7 @@ class _BreakTypesScreenState extends State<BreakTypesScreen> {
   }
 }
 
-/// Name, alarm (FR-11.1) and Teams messages (FR-4.5) for one break type.
+/// Name and alarm settings (FR-11.1) for one break type.
 class BreakTypeEditorScreen extends StatefulWidget {
   const BreakTypeEditorScreen({super.key, this.existing});
 
@@ -144,7 +143,6 @@ class _BreakTypeEditorScreenState extends State<BreakTypeEditorScreen> {
   late final TextEditingController _name = TextEditingController(
     text: widget.existing?.name ?? '',
   );
-  late int? _id = widget.existing?.id;
   late bool _alarmEnabled = widget.existing?.alarmEnabled ?? false;
   late int _expectedMinutes = widget.existing?.expectedDurationMinutes ?? 15;
   late AlarmSound _sound =
@@ -173,7 +171,8 @@ class _BreakTypeEditorScreenState extends State<BreakTypeEditorScreen> {
       setState(() => _nameError = 'Enter a name');
       return;
     }
-    if (await repository.isNameTaken(name, exceptId: _id)) {
+    final id = widget.existing?.id;
+    if (await repository.isNameTaken(name, exceptId: id)) {
       setState(() => _nameError = 'A break type with this name already exists');
       return;
     }
@@ -188,29 +187,16 @@ class _BreakTypeEditorScreenState extends State<BreakTypeEditorScreen> {
       repeatIntervalMinutes: Value(_interval),
       midBreakAlarmMinutes: Value(encodeMidBreakAlarms(_midBreakAlarms)),
     );
-    final id = _id;
     if (id != null) {
       await repository.update(id, values);
-      if (mounted) Navigator.of(context).pop();
-      return;
+    } else {
+      await repository.add(values);
     }
-    // A new type stays open, since its Teams messages need a saved type.
-    final newId = await repository.add(values);
-    if (!mounted) return;
-    setState(() {
-      _id = newId;
-      _nameError = null;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Saved. You can now set its Teams messages.'),
-      ),
-    );
+    if (mounted) Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    final id = _id;
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -252,25 +238,6 @@ class _BreakTypeEditorScreenState extends State<BreakTypeEditorScreen> {
               ],
             ),
           ),
-          const SectionLabel('Microsoft Teams'),
-          if (id == null)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-              child: Text('Save this break type to set its Teams messages.'),
-            )
-          else ...[
-            TeamsTriggerTile(
-              trigger: TeamsTrigger.breakStart,
-              breakTypeId: id,
-              breakName: _name.text.trim(),
-            ),
-            const SizedBox(height: AppSpacing.md - 4),
-            TeamsTriggerTile(
-              trigger: TeamsTrigger.breakEnd,
-              breakTypeId: id,
-              breakName: _name.text.trim(),
-            ),
-          ],
         ],
       ),
     );

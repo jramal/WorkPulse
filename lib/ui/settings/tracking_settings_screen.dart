@@ -7,10 +7,9 @@ import '../../theme/app_theme.dart';
 import '../widgets/duration_picker.dart';
 import '../widgets/setting_tile.dart';
 import 'break_types_screen.dart';
-import 'teams_settings_screen.dart';
 
-/// Daily target + allowed break duration (FR-2.7), with links into break type
-/// management (FR-1.6) and Teams automation (FR-4.x).
+/// Daily target + allowed break duration (FR-2.7), with a link into break type
+/// management (FR-1.6).
 class TrackingSettingsScreen extends StatefulWidget {
   const TrackingSettingsScreen({super.key});
 
@@ -93,19 +92,6 @@ class _TrackingSettingsScreenState extends State<TrackingSettingsScreen> {
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
                     builder: (_) => const BreakTypesScreen(),
-                  ),
-                ),
-              ),
-              const SectionLabel('Automation'),
-              SettingTile(
-                key: const Key('teams-setting'),
-                icon: Icons.groups_rounded,
-                color: AppAccents.productive,
-                title: 'Microsoft Teams',
-                subtitle: settings.teamsEnabled ? 'On' : 'Off',
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const TeamsSettingsScreen(),
                   ),
                 ),
               ),

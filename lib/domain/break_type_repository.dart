@@ -55,19 +55,15 @@ class BreakTypeRepository {
   /// Returns true if it was archived rather than deleted.
   Future<bool> delete(int id) {
     return _db.transaction(() async {
-      final used = await (_db.select(
-        _db.activities,
-      )..where((a) => a.breakTypeId.equals(id))..limit(1)).getSingleOrNull();
+      final used =
+          await (_db.select(_db.activities)
+                ..where((a) => a.breakTypeId.equals(id))
+                ..limit(1))
+              .getSingleOrNull();
       if (used != null) {
         await update(id, const BreakTypesCompanion(isActive: Value(false)));
-        await (_db.update(_db.teamsTriggerConfigs)
-              ..where((c) => c.breakTypeId.equals(id)))
-            .write(const TeamsTriggerConfigsCompanion(enabled: Value(false)));
         return true;
       }
-      await (_db.delete(
-        _db.teamsTriggerConfigs,
-      )..where((c) => c.breakTypeId.equals(id))).go();
       await (_db.delete(_db.breakTypes)..where((t) => t.id.equals(id))).go();
       return false;
     });

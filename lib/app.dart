@@ -22,17 +22,22 @@ class _WorkPulseAppState extends State<WorkPulseApp> {
   late final AppServices _services = widget.services ?? AppServices();
   late final TrackingServiceController _trackingService =
       TrackingServiceController(_services);
+  late final AppLifecycleListener _lifecycle;
 
   @override
   void initState() {
     super.initState();
     _trackingService.start();
-    // Anything still queued from a previous run, on any platform.
-    unawaited(_services.teamsSender.flush());
+    unawaited(_services.taskActions.syncGeofences());
+    // Coming back from Android settings is how location permission arrives.
+    _lifecycle = AppLifecycleListener(
+      onResume: () => unawaited(_services.taskActions.syncGeofences()),
+    );
   }
 
   @override
   void dispose() {
+    _lifecycle.dispose();
     _trackingService.dispose();
     super.dispose();
   }

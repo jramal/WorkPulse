@@ -1,24 +1,23 @@
 import 'package:flutter/widgets.dart';
 
 import 'background/break_alarms.dart';
-import 'background/teams_delivery.dart';
+import 'background/task_actions.dart';
 import 'background/tracking_actions.dart';
 import 'data/database.dart';
 import 'domain/break_type_repository.dart';
-import 'domain/teams_repository.dart';
+import 'domain/task_repository.dart';
 import 'domain/tracking_engine.dart';
 
 /// Bundles the app's singletons, built on one database connection. The
 /// background service builds its own set in its own engine.
 class AppServices {
-  AppServices._(this.database, this.tracking, this.breakTypes, this.teamsSender)
-    : teams = TeamsRepository(database),
-      actions = TrackingActions(
+  AppServices._(this.database, this.tracking, this.breakTypes, this.tasks)
+    : actions = TrackingActions(
         engine: tracking,
         breakTypes: breakTypes,
         alarms: BreakAlarmScheduler(),
-        teams: teamsSender,
-      );
+      ),
+      taskActions = TaskActions(tasks);
 
   factory AppServices({AppDatabase? database}) {
     final db = database ?? AppDatabase();
@@ -26,16 +25,16 @@ class AppServices {
       db,
       TrackingEngine(db),
       BreakTypeRepository(db),
-      TeamsSender(db),
+      TaskRepository(db),
     );
   }
 
   final AppDatabase database;
   final TrackingEngine tracking;
   final BreakTypeRepository breakTypes;
-  final TeamsRepository teams;
-  final TeamsSender teamsSender;
+  final TaskRepository tasks;
   final TrackingActions actions;
+  final TaskActions taskActions;
 }
 
 class AppServicesScope extends InheritedWidget {

@@ -59,9 +59,8 @@ class _DurationPickerSheetState extends State<_DurationPickerSheet> {
           children: [
             Text(
               widget.title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(context).textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w700),
             ),
             CupertinoTimerPicker(
               mode: CupertinoTimerPickerMode.hm,

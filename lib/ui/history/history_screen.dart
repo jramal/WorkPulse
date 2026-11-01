@@ -92,7 +92,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
           builder: (context, settingsSnapshot) {
             final settings = settingsSnapshot.data;
             final days = <String, List<Activity>>{};
-            for (final activity in activitiesSnapshot.data ?? const <Activity>[]) {
+            for (final activity
+                in activitiesSnapshot.data ?? const <Activity>[]) {
               (days[activity.dayKey] ??= []).add(activity);
             }
             final keys = days.keys.toList();
@@ -126,7 +127,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         final key = keys[index];
                         return _DayTile(
                           dayKey: key,
-                          summary: _summarizeDay(tracking, days[key]!, settings),
+                          summary: _summarizeDay(
+                            tracking,
+                            days[key]!,
+                            settings,
+                          ),
                           onTap: () => _openDay(key),
                         );
                       },
@@ -197,7 +202,8 @@ class _DayTile extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: summary.progress,
                   minHeight: 6,
-                  color: summary.overtime > Duration.zero ||
+                  color:
+                      summary.overtime > Duration.zero ||
                           summary.remaining == Duration.zero
                       ? AppAccents.productive
                       : AppAccents.worked,
@@ -237,10 +243,8 @@ class _TargetBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w700,
-        ),
+        style: Theme.of(context).textTheme.labelMedium
+            ?.copyWith(color: color, fontWeight: FontWeight.w700),
       ),
     );
   }
@@ -341,7 +345,8 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                     activities: activities,
                     summary: _summarizeDay(tracking, activities, settings),
                     breakNames: {
-                      for (final type in typesSnapshot.data ?? const <BreakType>[])
+                      for (final type
+                          in typesSnapshot.data ?? const <BreakType>[])
                         type.id: type.name,
                     },
                   );
@@ -474,7 +479,10 @@ class _Row extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: theme.textTheme.bodyMedium?.copyWith(color: color)),
+          Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(color: color),
+          ),
           Text(
             value,
             style: theme.textTheme.bodyMedium?.copyWith(

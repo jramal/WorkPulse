@@ -1,7 +1,6 @@
 import 'package:drift/drift.dart';
 
 import '../data/database.dart';
-import 'teams_repository.dart';
 
 /// Today's totals, derived at read time (CRS Section 8 — nothing here is
 /// stored). [now] is folded in so an in-progress activity contributes its
@@ -64,10 +63,9 @@ String dayKeyFor(DateTime time) {
 /// in-memory counter, so elapsed time stays correct across restarts
 /// (NFR-3/NFR-4).
 class TrackingEngine {
-  TrackingEngine(this._db) : _teams = TeamsRepository(_db);
+  TrackingEngine(this._db);
 
   final AppDatabase _db;
-  final TeamsRepository _teams;
 
   /// The single activity with no end time, if any (FR-1.8: at most one).
   Stream<Activity?> watchOpenActivity() {
@@ -133,10 +131,11 @@ class TrackingEngine {
       // had committed in between.
       await _db.customStatement('UPDATE app_settings SET id = id WHERE 0');
 
-      final open = await (_db.select(_db.activities)
-            ..where((a) => a.endTime.isNull())
-            ..limit(1))
-          .getSingleOrNull();
+      final open =
+          await (_db.select(_db.activities)
+                ..where((a) => a.endTime.isNull())
+                ..limit(1))
+              .getSingleOrNull();
       if (!allowedFrom(open)) return null;
 
       final now = DateTime.now();
@@ -157,7 +156,6 @@ class TrackingEngine {
                     targetMinutes: Value(settings.dailyTargetMinutes),
                   ),
                 );
-      await _enqueueTeamsMessages(closed, opened, settings, now);
       return TrackingTransition(closed: closed, opened: opened);
     });
   }
@@ -174,41 +172,6 @@ class TrackingEngine {
           ),
         );
     return rows.single;
-  }
-
-  Future<void> _enqueueTeamsMessages(
-    Activity? closed,
-    Activity? opened,
-    AppSetting settings,
-    DateTime now,
-  ) async {
-    final today = await (_db.select(
-      _db.activities,
-    )..where((a) => a.dayKey.equals(dayKeyFor(now)))).get();
-    final summary = summarize(activities: today, settings: settings, now: now);
-
-    Future<void> send(TeamsTrigger trigger, Activity activity) {
-      return _teams.enqueue(
-        trigger: trigger,
-        activity: activity,
-        settings: settings,
-        summary: summary,
-        now: now,
-      );
-    }
-
-    final endedBreak = closed?.kind == ActivityKind.breakActivity;
-    if (endedBreak) await send(TeamsTrigger.breakEnd, closed!);
-    if (opened == null) {
-      await send(TeamsTrigger.endWork, closed!);
-    } else if (opened.kind == ActivityKind.breakActivity) {
-      await send(TeamsTrigger.breakStart, opened);
-    } else {
-      await send(
-        endedBreak ? TeamsTrigger.resumeWork : TeamsTrigger.startWork,
-        opened,
-      );
-    }
   }
 
   /// FR-2.1–2.6: sums the given activities, counting an open one's elapsed

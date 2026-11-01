@@ -11,10 +11,6 @@ enum AlarmAlertStyle { headsUp, quiet }
 
 enum ReminderBehaviour { once, repeat }
 
-enum TeamsTrigger { startWork, resumeWork, endWork, breakStart, breakEnd }
-
-enum DeliveryStatus { queued, sending, sent, failed }
-
 class BreakTypes extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text().withLength(min: 1, max: 60)();
@@ -22,8 +18,7 @@ class BreakTypes extends Table {
   IntColumn get colorValue => integer().nullable()();
   BoolColumn get isDefault => boolean().withDefault(const Constant(false))();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
-  DateTimeColumn get createdAt =>
-      dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   BoolColumn get alarmEnabled => boolean().withDefault(const Constant(false))();
   IntColumn get expectedDurationMinutes =>
       integer().withDefault(const Constant(15))();
@@ -66,48 +61,26 @@ class AppSettings extends Table {
       integer().withDefault(const Constant(480))();
   IntColumn get allowedBreakMinutes =>
       integer().withDefault(const Constant(60))();
-  BoolColumn get teamsEnabled => boolean().withDefault(const Constant(false))();
-  TextColumn get teamsDefaultDestination => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
 }
 
-class TeamsTriggerConfigs extends Table {
+@DataClassName('Task')
+class Tasks extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get trigger => textEnum<TeamsTrigger>()();
-  IntColumn get breakTypeId =>
-      integer().nullable().references(BreakTypes, #id)();
-  BoolColumn get enabled => boolean().withDefault(const Constant(false))();
-  TextColumn get messageTemplate => text().withDefault(const Constant(''))();
-  // Overrides AppSettings.teamsDefaultDestination when set.
-  TextColumn get destination => text().nullable()();
+  TextColumn get title => text().withLength(min: 1, max: 120)();
+  TextColumn get notes => text().nullable()();
+  DateTimeColumn get dueAt => dateTime().nullable()();
+  TextColumn get locationName => text().nullable()();
+  RealColumn get latitude => real().nullable()();
+  RealColumn get longitude => real().nullable()();
+  IntColumn get radiusMeters => integer().nullable()();
+  BoolColumn get isDone => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
-@DataClassName('TeamsDelivery')
-class TeamsDeliveries extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get label => text()();
-  IntColumn get activityId => integer().nullable().references(Activities, #id)();
-  TextColumn get message => text()();
-  TextColumn get destination => text()();
-  TextColumn get status => textEnum<DeliveryStatus>()();
-  IntColumn get attempts => integer().withDefault(const Constant(0))();
-  DateTimeColumn get nextAttemptAt => dateTime()();
-  DateTimeColumn get lastAttemptAt => dateTime().nullable()();
-  TextColumn get lastError => text().nullable()();
-  DateTimeColumn get createdAt => dateTime()();
-}
-
-@DriftDatabase(
-  tables: [
-    BreakTypes,
-    Activities,
-    AppSettings,
-    TeamsTriggerConfigs,
-    TeamsDeliveries,
-  ],
-)
+@DriftDatabase(tables: [BreakTypes, Activities, AppSettings, Tasks])
 class AppDatabase extends _$AppDatabase {
   AppDatabase({QueryExecutor? executor})
     : super(
@@ -127,7 +100,7 @@ class AppDatabase extends _$AppDatabase {
       );
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -145,13 +118,24 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(breakTypes, breakTypes.reminderBehaviour);
         await m.addColumn(breakTypes, breakTypes.repeatIntervalMinutes);
         await m.addColumn(activities, activities.targetMinutes);
-        await m.addColumn(appSettings, appSettings.teamsEnabled);
-        await m.addColumn(appSettings, appSettings.teamsDefaultDestination);
-        await m.createTable(teamsTriggerConfigs);
-        await m.createTable(teamsDeliveries);
       }
       if (from < 3) {
         await m.addColumn(breakTypes, breakTypes.midBreakAlarmMinutes);
+      }
+      if (from < 4) {
+        // Removes the retired Teams feature, including stored webhook URLs.
+        // Those tables and columns only ever existed from version 2 onwards.
+        if (from >= 2) {
+          await customStatement('DROP TABLE IF EXISTS teams_deliveries');
+          await customStatement('DROP TABLE IF EXISTS teams_trigger_configs');
+          await customStatement(
+            'ALTER TABLE app_settings DROP COLUMN teams_default_destination',
+          );
+          await customStatement(
+            'ALTER TABLE app_settings DROP COLUMN teams_enabled',
+          );
+        }
+        await m.createTable(tasks);
       }
     },
   );
@@ -172,7 +156,10 @@ class AppDatabase extends _$AppDatabase {
       await db
           .into(db.breakTypes)
           .insert(
-            BreakTypesCompanion.insert(name: name, isDefault: const Value(true)),
+            BreakTypesCompanion.insert(
+              name: name,
+              isDefault: const Value(true),
+            ),
           );
     }
   }

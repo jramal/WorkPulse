@@ -1,28 +1,22 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 
 import '../data/database.dart';
 import '../domain/break_type_repository.dart';
 import '../domain/tracking_engine.dart';
 import 'break_alarms.dart';
-import 'teams_delivery.dart';
 
 /// What the UI and the notification buttons call to change state. The tracking
-/// record commits first, then alarms and Teams follow; neither can undo or
-/// block it (NFR-5).
+/// record commits first, then alarms follow, and can't undo or block it (NFR-5).
 class TrackingActions {
   TrackingActions({
     required this._engine,
     required this._breakTypes,
     required this._alarms,
-    required this._teams,
   });
 
   final TrackingEngine _engine;
   final BreakTypeRepository _breakTypes;
   final BreakAlarmScheduler _alarms;
-  final TeamsSender _teams;
 
   Future<void> startWork() => _engine.startWork().then(_afterTransition);
 
@@ -40,7 +34,6 @@ class TrackingActions {
     } catch (error) {
       debugPrint('Break alarm update failed: $error');
     }
-    unawaited(_teams.flush());
   }
 
   Future<void> _syncAlarms(Activity? closed, Activity? opened) async {

@@ -26,10 +26,7 @@ class _TrackingTaskHandler extends TaskHandler {
   Future<void> onStart(DateTime timestamp, TaskStarter starter) => _refresh();
 
   @override
-  void onRepeatEvent(DateTime timestamp) {
-    unawaited(_refresh());
-    unawaited(_services.teamsSender.flush());
-  }
+  void onRepeatEvent(DateTime timestamp) => unawaited(_refresh());
 
   @override
   void onReceiveData(Object data) {
@@ -139,7 +136,9 @@ class TrackingServiceController {
     _subscriptions
       ..add(tracking.watchOpenActivity().listen(_enqueueSync))
       ..add(tracking.watchSettings().listen((_) => _requestRefresh()))
-      ..add(_services.breakTypes.watchActive().listen((_) => _requestRefresh()));
+      ..add(
+        _services.breakTypes.watchActive().listen((_) => _requestRefresh()),
+      );
     // Android refuses to start a foreground service while the app is behind
     // the lock screen or in the background, so each return to the foreground
     // has to try again; nothing else would until the activity next changes.
@@ -172,7 +171,7 @@ class TrackingServiceController {
   void _onTaskData(Object data) {
     if (data != _stateChangedEvent) return;
     final db = _services.database;
-    db.markTablesUpdated({db.activities, db.teamsDeliveries});
+    db.markTablesUpdated({db.activities});
   }
 
   Future<void> _sync(Activity? open) async {
@@ -202,7 +201,8 @@ class TrackingServiceController {
   }
 
   Future<void> _ensureNotificationPermission() async {
-    final permission = await FlutterForegroundTask.checkNotificationPermission();
+    final permission =
+        await FlutterForegroundTask.checkNotificationPermission();
     if (permission != NotificationPermission.granted) {
       await FlutterForegroundTask.requestNotificationPermission();
     }
